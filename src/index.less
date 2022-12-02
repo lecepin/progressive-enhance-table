@@ -1,0 +1,72 @@
+@name: .PETable;
+
+@{name}{
+  --color-boder: #e6ebf1;
+  --color-th: #111720;
+  --font-size-th: 12px;
+  --font-size-td: 12px;
+  --font-weight-th: 700;
+  --padding-th: 11px 16px;
+  --padding-td: 9px 16px;
+  --round-radius: 6px;
+  --bg-thead: #f1f3f6;
+  --bg-cell: #fff;
+
+  overflow: auto;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  table {
+    border-collapse: separate;
+  }
+
+  // &::-webkit-scrollbar {
+  //   width: 10px;
+  //   height: 10px;
+  // }
+
+  // &::-webkit-scrollbar-thumb {
+  //   background: #ccc;
+  //   border: 1px solid #eaeaea;
+  // }
+
+  &-lock-mask{
+    position: absolute;
+    top: 0;    
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+
+    &-left {
+      left: 0;
+
+      &-shadow{
+        height: 100%;
+        box-shadow: rgba(153,153,153,0.5) 0 0 6px 2px;
+        margin-right: 10px;
+      }
+    }
+
+    &-right {
+      right: 0;
+
+      &-shadow{
+        height: 100%;
+        box-shadow: rgba(153,153,153,0.5) 0 0 6px 2px;
+        margin-left: 10px;
+      }
+    }
+  }
+
+  &-resize-bar{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1px solid #0052f2;
+    z-index: 10;
+    display: none;
+  }
+}

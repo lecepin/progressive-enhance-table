@@ -1,0 +1,63 @@
+{
+  "name": "pe-table",
+  "version": "0.0.1",
+  "description": "intro component",
+  "files": [
+    "demo/",
+    "es/",
+    "lib/",
+    "build/"
+  ],
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "sideEffects": [
+    "dist/*",
+    "*.scss",
+    "*.less",
+    "*.css"
+  ],
+  "scripts": {
+    "start": "build-scripts start",
+    "build": "build-scripts build",
+    "test": "build-scripts test",
+    "prepublishOnly": "npm run build",
+    "eslint": "eslint --cache --ext .js,.jsx,.ts,.tsx ./",
+    "eslint:fix": "npm run eslint -- --fix",
+    "stylelint": "stylelint \"**/*.{css,scss,less}\"",
+    "lint": "npm run eslint && npm run stylelint"
+  },
+  "keywords": [
+    "ice",
+    "react",
+    "component"
+  ],
+  "dependencies": {
+    "ahooks": "^3.7.2",
+    "classnames": "^2.3.2"
+  },
+  "devDependencies": {
+    "build-plugin-component": "^1.0.0",
+    "build-scripts": "^1.1.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "enzyme": "^3.10.0",
+    "enzyme-adapter-react-16": "^1.14.0",
+    "@iceworks/spec": "^1.0.0",
+    "eslint": "^7.0.0",
+    "stylelint": "^13.7.2",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2"
+  },
+  "peerDependencies": {
+    "react": "^16 || ^17"
+  },
+  "componentConfig": {
+    "name": "PETable",
+    "title": "demo component",
+    "category": "Table"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT"
+}
