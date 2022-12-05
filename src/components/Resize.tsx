@@ -40,7 +40,7 @@ export default React.memo(function Resize({
       refDomResizeBar.current.style.cssText = `display: block; left: ${startFitX}px;`;
       document.body.style.setProperty("user-select", "none");
       document.body.style.setProperty("cursor", "col-resize");
-      document.body.setAttribute("unselectable", "on");
+      document.documentElement.classList.add("PE-Resize-no-select");
 
       const onMouseMove = (e: MouseEvent) => {
         const newLeft = e.clientX - lastClientX + startFitX;
@@ -53,7 +53,7 @@ export default React.memo(function Resize({
         refDomResizeBar.current.style.cssText = `display: none;`;
         document.body.style.setProperty("user-select", "");
         document.body.style.setProperty("cursor", "");
-        document.body.removeAttribute("unselectable");
+        document.documentElement.classList.remove("PE-Resize-no-select");
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
 

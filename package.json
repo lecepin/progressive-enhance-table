@@ -59,5 +59,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://unpkg.com/pe-table@0.0.1/build/index.html"
 }

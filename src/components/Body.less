@@ -102,5 +102,18 @@
         }
       }
     }
+
+    &-loading-icon{
+      animation:loadingSvg 2s linear infinite;
+      transform-origin:center; 
+    }
+  }
+}
+
+
+@keyframes loadingSvg {
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
   }
 }

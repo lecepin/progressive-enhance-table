@@ -207,6 +207,22 @@ export default React.memo(function PETable(props: TableProps) {
     );
   }, [refTable.current]);
 
+  // Safari 宽度兼容问题，必须先在css中设置宽度100%，随后任意值都可以。不然无效，即便js修改这个值
+  React.useEffect(() => {
+    if (!refTable.current || propAutoWidth) {
+      return;
+    }
+
+    [
+      refTable.current.querySelector(":scope > .PE-Body > table"),
+      refTable.current.querySelector(":scope > .PE-header > table"),
+    ].forEach((el: HTMLElement) => {
+      if (el) {
+        el.style.width = "unset";
+      }
+    });
+  }, [refTable.current, propAutoWidth]);
+
   // 处理 Body Resize 后的一些同步问题
   const resizeObserverBody = React.useMemo(
     () =>

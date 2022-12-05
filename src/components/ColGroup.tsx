@@ -17,6 +17,7 @@ export default React.memo(function ColGroup({
           style={{
             width: col?.width,
             minWidth: autoWidth ? "unset" : col?.width,
+            maxWidth: autoWidth ? "unset" : col?.width,
           }}
           key={index}
         ></col>
