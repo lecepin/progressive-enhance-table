@@ -99,6 +99,7 @@ export default React.memo(function BodyTree({
   primaryKey,
   onRowOpen,
   isTreeGroupView,
+  rowHeight,
 }: Props) {
   const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
   const [loadingKeys, setLoadingKeys] = React.useState([]);
@@ -250,6 +251,8 @@ export default React.memo(function BodyTree({
             "PE-Body-Tree-group-view-row-parent-round":
               row.___level === 0 && isTreeGroupView && round,
           })}
+          data-primary-id={row[primaryKey]}
+          style={{ height: rowHeight }}
         >
           {flatColumn?.map((col, colIndex, arr) => {
             const lockStyle: React.CSSProperties = {};
@@ -352,7 +355,13 @@ export default React.memo(function BodyTree({
         </tr>
       ) : null;
 
-      if (row.___level === 0) {
+      if (!isTreeGroupView) {
+        if (!Array.isArray(tableArr[0])) {
+          tableArr[0] = [renderTr];
+        } else {
+          tableArr[0].push(renderTr);
+        }
+      } else if (row.___level === 0) {
         tableArr[++tableIndex] = [renderTr];
       } else {
         tableArr[tableIndex].push(renderTr);

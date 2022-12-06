@@ -22,6 +22,7 @@ interface Props {
   refDomTable?: React.MutableRefObject<HTMLDivElement | null>;
   onResizeChange?: (dataIndex: string, value: number) => void;
   isTreeGroupView?: boolean;
+  rowHeight?: number;
 }
 
 export default React.memo(function Header({
@@ -35,6 +36,7 @@ export default React.memo(function Header({
   refDomTable,
   onResizeChange,
   isTreeGroupView,
+  rowHeight,
 }: Props) {
   return (
     <div
@@ -57,6 +59,7 @@ export default React.memo(function Header({
                 "PE-header-row-first": parentIndex == 0,
                 "PE-header-row-last": parentIndex == parentArr.length - 1,
               })}
+              style={{ height: rowHeight }}
             >
               {groupChild.map((col, index, arr) => {
                 const lockStyle: React.CSSProperties = {};

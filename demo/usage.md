@@ -290,6 +290,8 @@ const App = () => {
     },
   ]);
 
+  const ref = React.useRef();
+
   return (
     <div>
       <h5>常规</h5>
@@ -890,6 +892,41 @@ const App = () => {
         defaultOpenRowKeys={[1]}
         isTreeGroupView
       />
+
+      <h5>自动宽度 & 圆角 & 最大高度 & 滚动到指定 id 行</h5>
+      <button
+        onClick={() => {
+          ref.current.scrollToViewByPrimaryKey("14", (el) => {
+            console.log(el);
+          });
+        }}
+      >
+        查找 赵六8
+      </button>
+      <PETable
+        ref={ref}
+        autoWidth
+        round
+        {...props}
+        maxHeight={200}
+        dataSource={[
+          { id: 1, name: "张三1", sex: "男", age: "18" },
+          { id: 2, name: "李四2", sex: "女", age: "28" },
+          { id: 3, name: "王五3", sex: "女", age: "48" },
+          { id: 4, name: "赵六4", sex: "男", age: "8" },
+          { id: 11, name: "张三5", sex: "男", age: "18" },
+          { id: 12, name: "李四6", sex: "女", age: "28" },
+          { id: 13, name: "王五7", sex: "女", age: "48" },
+          { id: 14, name: "赵六8", sex: "男", age: "8" },
+          { id: 111, name: "张三9", sex: "男", age: "18" },
+          { id: 122, name: "李四10", sex: "女", age: "28" },
+          { id: 133, name: "王五11", sex: "女", age: "48" },
+          { id: 144, name: "赵六12", sex: "男", age: "8" },
+        ]}
+      />
+
+      <h5>常规 & 行高</h5>
+      <PETable {...props} rowHeight={50} />
     </div>
   );
 };

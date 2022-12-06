@@ -22,6 +22,7 @@ interface Props {
     record: any
   ) => any;
   rowHeight?: number;
+  primaryKey?: string;
 }
 
 export default React.memo(function Body({
@@ -34,6 +35,8 @@ export default React.memo(function Body({
   cellProps,
   lockLeftColumns = [],
   lockRightColumns = [],
+  primaryKey,
+  rowHeight,
 }: Props) {
   const notRenderCellIndex: Array<Array<any>> = [];
 
@@ -54,6 +57,8 @@ export default React.memo(function Body({
                 "PE-Body-row-first": rowIndex == 0,
                 "PE-Body-row-last": rowIndex == arr.length - 1,
               })}
+              data-primary-id={row[primaryKey]}
+              style={{ height: rowHeight }}
             >
               {flatColumn?.map((col, colIndex, arr) => {
                 // 合并单元格处理
