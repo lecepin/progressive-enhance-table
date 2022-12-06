@@ -15,7 +15,6 @@ interface Props {
   autoWidth?: boolean;
   round?: boolean;
   loading?: boolean;
-  maxBodyHeight?: number | string;
   cellProps?: (
     rowIndex: number,
     colIndex: number,
@@ -90,7 +89,6 @@ export default React.memo(function BodyTree({
   round,
   loading,
   cellProps,
-  maxBodyHeight,
   lockLeftColumns = [],
   lockRightColumns = [],
   openRowKeys: propOpenRowKeys,
@@ -233,7 +231,6 @@ export default React.memo(function BodyTree({
       className={classNames("PE-Body", "PE-Body-Tree", {
         "PE-Body-round": round,
       })}
-      style={{ maxHeight: maxBodyHeight }}
     >
       <table
         className={classNames("PE-Body-table", {

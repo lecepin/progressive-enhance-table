@@ -26,7 +26,7 @@ export interface TableProps {
   isTree?: boolean;
   rowHeight?: number;
   indent?: number;
-  maxBodyHeight?: number | string;
+  maxHeight?: number | string;
   onRowOpen?: (
     openRowKeys: Array<any>,
     currentRowKey: string,

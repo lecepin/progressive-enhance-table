@@ -15,7 +15,6 @@ interface Props {
   autoWidth?: boolean;
   round?: boolean;
   loading?: boolean;
-  maxBodyHeight?: number | string;
   cellProps?: (
     rowIndex: number,
     colIndex: number,
@@ -33,17 +32,13 @@ export default React.memo(function Body({
   round,
   loading,
   cellProps,
-  maxBodyHeight,
   lockLeftColumns = [],
   lockRightColumns = [],
 }: Props) {
   const notRenderCellIndex: Array<Array<any>> = [];
 
   return (
-    <div
-      className={classNames("PE-Body", { "PE-Body-round": round })}
-      style={{ maxHeight: maxBodyHeight }}
-    >
+    <div className={classNames("PE-Body", { "PE-Body-round": round })}>
       <table
         className={classNames("PE-Body-table", {
           "PE-Body-auto-width": autoWidth,

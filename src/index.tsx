@@ -254,8 +254,17 @@ export default React.memo(function PETable(props: TableProps) {
   return (
     <Loading visible={propLoading}>
       <div
-        className={classNames("PETable", props.className)}
-        style={propStyle}
+        className={classNames(
+          "PETable",
+          {
+            "PETable-round": propRound,
+          },
+          props.className
+        )}
+        style={{
+          ...propStyle,
+          maxHeight: props.maxHeight || "unset",
+        }}
         ref={refTable}
       >
         <Header

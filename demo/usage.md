@@ -328,7 +328,7 @@ const App = () => {
         autoWidth
         round
         {...props}
-        maxBodyHeight={200}
+        maxHeight={200}
         dataSource={[
           { id: 1, name: "张三", sex: "男", age: "18" },
           { id: 2, name: "李四", sex: "女", age: "28" },

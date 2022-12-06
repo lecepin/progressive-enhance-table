@@ -11,8 +11,12 @@
   --round-radius: 6px;
   --bg-thead: #f1f3f6;
   --bg-cell: #fff;
+  --scroll-bg: #f6f6f6;
+  --scroll-fg: #d0d0d0;
 
   overflow: auto;
+  // Safari 垂直溢出时小 1px
+  padding-bottom: 1px;
 
   * {
     box-sizing: border-box;
@@ -24,22 +28,25 @@
     width: 100%;
   } 
 
-  // &::-webkit-scrollbar {
-  //   width: 10px;
-  //   height: 10px;
-  // }
+  &::-webkit-scrollbar-thumb {
+    background: var(--scroll-fg);
+    border: 1px solid var(--scroll-bg);
+  }
 
-  // &::-webkit-scrollbar-thumb {
-  //   background: #ccc;
-  //   border: 1px solid #eaeaea;
-  // }
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background-color: var(--scroll-bg);
+  }
 
   &-lock-mask{
     position: absolute;
-    top: 0;    
-    bottom: 0;
+    // safari 
+    top: 1px;    
+    bottom: 10px;
     overflow: hidden;
     pointer-events: none;
+    z-index: 4;
 
     &-left {
       left: 0;
@@ -70,5 +77,9 @@
     border-left: 1px solid #0052f2;
     z-index: 10;
     display: none;
+  }
+
+  &-round{
+    border-radius: var(--round-radius);
   }
 }
