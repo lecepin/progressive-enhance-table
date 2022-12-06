@@ -21,6 +21,7 @@ interface Props {
   refDomResizeBar?: React.MutableRefObject<HTMLDivElement | null>;
   refDomTable?: React.MutableRefObject<HTMLDivElement | null>;
   onResizeChange?: (dataIndex: string, value: number) => void;
+  isTreeGroupView?: boolean;
 }
 
 export default React.memo(function Header({
@@ -33,11 +34,13 @@ export default React.memo(function Header({
   refDomResizeBar,
   refDomTable,
   onResizeChange,
+  isTreeGroupView,
 }: Props) {
   return (
     <div
       className={classNames("PE-header", {
         "PE-header-round": round,
+        "PE-header-round-group-view": round && isTreeGroupView,
       })}
     >
       <table

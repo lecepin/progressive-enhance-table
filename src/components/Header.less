@@ -58,6 +58,19 @@
     }
   }
 
+  &-round-group-view {
+    @{name}-row-first {
+      @{name}-col-first {
+        border-top-left-radius: var(--round-radius);
+        border-bottom-left-radius: var(--round-radius);
+      }
+      @{name}-col-last {
+        border-top-right-radius: var(--round-radius);
+        border-bottom-right-radius: var(--round-radius);
+      }
+    }
+  }
+
   &::-webkit-scrollbar {
     display: none;
   }

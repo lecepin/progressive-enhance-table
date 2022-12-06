@@ -278,6 +278,7 @@ export default React.memo(function PETable(props: TableProps) {
           refDomResizeBar={refReszieBar}
           refDomTable={refTable}
           onResizeChange={props.onResizeChange}
+          isTreeGroupView={props.isTreeGroupView}
         />
         {props.isTree ? (
           <BodyTree
@@ -288,7 +289,6 @@ export default React.memo(function PETable(props: TableProps) {
             autoWidth={propAutoWidth}
             round={propRound}
             loading={propLoading}
-            maxBodyHeight={props.maxBodyHeight}
             lockLeftColumns={lockLeftArray}
             lockRightColumns={lockRightArray}
             openRowKeys={props.openRowKeys}
@@ -297,6 +297,7 @@ export default React.memo(function PETable(props: TableProps) {
             indent={props.indent}
             onRowOpen={props.onRowOpen}
             defaultOpenRowKeys={props.defaultOpenRowKeys}
+            isTreeGroupView={props.isTreeGroupView}
           />
         ) : (
           <Body
@@ -307,7 +308,6 @@ export default React.memo(function PETable(props: TableProps) {
             autoWidth={propAutoWidth}
             round={propRound}
             loading={propLoading}
-            maxBodyHeight={props.maxBodyHeight}
             lockLeftColumns={lockLeftArray}
             lockRightColumns={lockRightArray}
           />

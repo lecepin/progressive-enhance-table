@@ -34,6 +34,7 @@ interface Props {
     expanded: boolean,
     currentRecord: any
   ) => void;
+  isTreeGroupView?: boolean;
 }
 
 interface TreeNodeHandleParams {
@@ -97,6 +98,7 @@ export default React.memo(function BodyTree({
   indent = 20,
   primaryKey,
   onRowOpen,
+  isTreeGroupView,
 }: Props) {
   const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
   const [loadingKeys, setLoadingKeys] = React.useState([]);
@@ -226,154 +228,170 @@ export default React.memo(function BodyTree({
     }
   };
 
+  const renderTable = () => {
+    let tableArr: Array<Array<any>> = [];
+    let tableIndex = -1;
+
+    flatDataSource?.map((row, rowIndex, arr) => {
+      const isOpen = openRowKeys.includes(row[primaryKey]);
+      const isLoading = loadingKeys.includes(row[primaryKey]);
+      const isShow =
+        row.___level === 0 || showTreeNodes.includes(row[primaryKey]);
+
+      const renderTr = isShow ? (
+        <tr
+          key={rowIndex}
+          data-row-index={rowIndex}
+          className={classNames("PE-Body-row", {
+            "PE-Body-row-first": rowIndex == 0,
+            "PE-Body-row-last": rowIndex == arr.length - 1,
+            "PE-Body-Tree-group-view-row-parent":
+              row.___level === 0 && isTreeGroupView,
+            "PE-Body-Tree-group-view-row-parent-round":
+              row.___level === 0 && isTreeGroupView && round,
+          })}
+        >
+          {flatColumn?.map((col, colIndex, arr) => {
+            const lockStyle: React.CSSProperties = {};
+
+            const attrs =
+              cellProps?.(rowIndex, colIndex, col?.dataIndex, row) || {};
+
+            if (!autoWidth) {
+              if (
+                lockLeftColumns?.length &&
+                colIndex < lockLeftColumns.length
+              ) {
+                lockStyle.position = "sticky";
+                lockStyle.left = lockLeftColumns
+                  .slice(0, colIndex)
+                  .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
+              } else if (
+                lockRightColumns?.length &&
+                colIndex >= flatColumn.length - lockRightColumns.length
+              ) {
+                lockStyle.position = "sticky";
+                lockStyle.right = lockRightColumns
+                  .slice(
+                    colIndex - flatColumn.length + lockRightColumns.length + 1
+                  )
+                  .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
+              }
+            }
+
+            return (
+              <td
+                {...attrs}
+                key={colIndex}
+                data-row-index={rowIndex}
+                data-col-index={colIndex}
+                className={classNames("PE-Body-col", {
+                  "PE-Body-col-first": colIndex == 0,
+                  "PE-Body-col-last": colIndex == arr.length - 1,
+                  "PE-Body-col-lock-left":
+                    !autoWidth && colIndex < lockLeftColumns.length,
+                  "PE-Body-col-lock-right":
+                    !autoWidth &&
+                    colIndex >= flatColumn.length - lockRightColumns.length,
+                })}
+                style={{
+                  ...(attrs?.style || {}),
+                  textAlign: col?.align,
+                  ...lockStyle,
+                }}
+              >
+                <div
+                  className={classNames({
+                    "PE-Body-Tree-col": colIndex === 0,
+                  })}
+                >
+                  {colIndex === 0 ? (
+                    <div
+                      className="PE-Body-Tree-arrow"
+                      style={{ paddingLeft: row?.___level * indent }}
+                    >
+                      <div
+                        className={classNames("PE-Body-Tree-arrow-click", {
+                          "PE-Body-Tree-arrow-disabled":
+                            isLoading || row?.isLeaf === true,
+                        })}
+                        onClick={(e) => {
+                          onTreeNodeClick({
+                            record: row,
+                            primaryKey,
+                            dataSource: flatDataSource,
+                            openRowKeys: [...(openRowKeys || [])],
+                          });
+                        }}
+                      >
+                        {row?.isLeaf === false
+                          ? isLoading
+                            ? iconLoading
+                            : isOpen
+                            ? iconExpand
+                            : iconFold
+                          : null}
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="PE-Body-Tree-col-cell">
+                    {typeof col?.cell === "function"
+                      ? col?.cell(
+                          col?.dataIndex ? row[col?.dataIndex] : undefined,
+                          rowIndex,
+                          row
+                        )
+                      : col?.dataIndex
+                      ? row[col?.dataIndex]
+                      : undefined}
+                  </div>
+                </div>
+              </td>
+            );
+          })}
+        </tr>
+      ) : null;
+
+      if (row.___level === 0) {
+        tableArr[++tableIndex] = [renderTr];
+      } else {
+        tableArr[tableIndex].push(renderTr);
+      }
+    });
+
+    return (
+      <>
+        {tableArr.map((tbody, index) => (
+          <table
+            className={classNames("PE-Body-table", {
+              "PE-Body-auto-width": autoWidth,
+              "PE-Body-Tree-group-view-table": isTreeGroupView,
+              "PE-Body-Tree-group-view-table-round": isTreeGroupView && round,
+            })}
+            key={index}
+          >
+            <ColGroup columns={flatColumn} autoWidth={autoWidth} />
+            <tbody>{tbody}</tbody>
+          </table>
+        ))}
+        {!dataSource?.length && !loading ? (
+          <tr>
+            <td className="PE-Body-empty" colSpan={flatColumn.length}>
+              {emptyContent ?? "没有数据"}
+            </td>
+          </tr>
+        ) : null}
+      </>
+    );
+  };
+
   return (
     <div
       className={classNames("PE-Body", "PE-Body-Tree", {
         "PE-Body-round": round,
       })}
     >
-      <table
-        className={classNames("PE-Body-table", {
-          "PE-Body-auto-width": autoWidth,
-        })}
-      >
-        <ColGroup columns={flatColumn} autoWidth={autoWidth} />
-        <tbody>
-          {flatDataSource?.map((row, rowIndex, arr) => {
-            const isOpen = openRowKeys.includes(row[primaryKey]);
-            const isLoading = loadingKeys.includes(row[primaryKey]);
-            const isShow =
-              row.___level === 0 || showTreeNodes.includes(row[primaryKey]);
-
-            return isShow ? (
-              <tr
-                key={rowIndex}
-                data-row-index={rowIndex}
-                className={classNames("PE-Body-row", {
-                  "PE-Body-row-first": rowIndex == 0,
-                  "PE-Body-row-last": rowIndex == arr.length - 1,
-                })}
-              >
-                {flatColumn?.map((col, colIndex, arr) => {
-                  const lockStyle: React.CSSProperties = {};
-
-                  const attrs =
-                    cellProps?.(rowIndex, colIndex, col?.dataIndex, row) || {};
-
-                  if (!autoWidth) {
-                    if (
-                      lockLeftColumns?.length &&
-                      colIndex < lockLeftColumns.length
-                    ) {
-                      lockStyle.position = "sticky";
-                      lockStyle.left = lockLeftColumns
-                        .slice(0, colIndex)
-                        .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
-                    } else if (
-                      lockRightColumns?.length &&
-                      colIndex >= flatColumn.length - lockRightColumns.length
-                    ) {
-                      lockStyle.position = "sticky";
-                      lockStyle.right = lockRightColumns
-                        .slice(
-                          colIndex -
-                            flatColumn.length +
-                            lockRightColumns.length +
-                            1
-                        )
-                        .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
-                    }
-                  }
-
-                  return (
-                    <td
-                      {...attrs}
-                      key={colIndex}
-                      data-row-index={rowIndex}
-                      data-col-index={colIndex}
-                      className={classNames("PE-Body-col", {
-                        "PE-Body-col-first": colIndex == 0,
-                        "PE-Body-col-last": colIndex == arr.length - 1,
-                        "PE-Body-col-lock-left":
-                          !autoWidth && colIndex < lockLeftColumns.length,
-                        "PE-Body-col-lock-right":
-                          !autoWidth &&
-                          colIndex >=
-                            flatColumn.length - lockRightColumns.length,
-                      })}
-                      style={{
-                        ...(attrs?.style || {}),
-                        textAlign: col?.align,
-                        ...lockStyle,
-                      }}
-                    >
-                      <div
-                        className={classNames({
-                          "PE-Body-Tree-col": colIndex === 0,
-                        })}
-                      >
-                        {" "}
-                        {colIndex === 0 ? (
-                          <div
-                            className="PE-Body-Tree-arrow"
-                            style={{ paddingLeft: row?.___level * indent }}
-                          >
-                            <div
-                              className={classNames(
-                                "PE-Body-Tree-arrow-click",
-                                {
-                                  "PE-Body-Tree-arrow-disabled":
-                                    isLoading || row?.isLeaf === true,
-                                }
-                              )}
-                              onClick={(e) => {
-                                onTreeNodeClick({
-                                  record: row,
-                                  primaryKey,
-                                  dataSource: flatDataSource,
-                                  openRowKeys: [...(openRowKeys || [])],
-                                });
-                              }}
-                            >
-                              {row?.isLeaf === false
-                                ? isLoading
-                                  ? iconLoading
-                                  : isOpen
-                                  ? iconExpand
-                                  : iconFold
-                                : null}
-                            </div>
-                          </div>
-                        ) : null}
-                        <div className="PE-Body-Tree-col-cell">
-                          {typeof col?.cell === "function"
-                            ? col?.cell(
-                                col?.dataIndex
-                                  ? row[col?.dataIndex]
-                                  : undefined,
-                                rowIndex,
-                                row
-                              )
-                            : col?.dataIndex
-                            ? row[col?.dataIndex]
-                            : undefined}
-                        </div>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            ) : null;
-          })}
-          {!dataSource?.length && !loading ? (
-            <tr>
-              <td className="PE-Body-empty" colSpan={flatColumn.length}>
-                {emptyContent ?? "没有数据"}
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
+      {renderTable()}
     </div>
   );
 });

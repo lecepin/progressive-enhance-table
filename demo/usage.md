@@ -696,6 +696,200 @@ const App = () => {
           });
         }}
       />
+
+      <h5>自动宽度 & 圆角 & 树型 & 冻结列 & groupView</h5>
+      <PETable
+        isTree
+        round
+        {...props}
+        columns={[
+          {
+            dataIndex: "name",
+            title: "姓名",
+            alignHeader: "center",
+            width: 240,
+            lock: "left",
+          },
+          {
+            dataIndex: "sex",
+            title: "性别",
+            width: 100,
+            lock: "left",
+          },
+          {
+            dataIndex: "age",
+            title: "年龄",
+            width: 100,
+            lock: "left",
+          },
+          {
+            dataIndex: "a",
+            title: "a",
+            width: 100,
+          },
+          {
+            dataIndex: "ab",
+            title: "b",
+            width: 100,
+          },
+          {
+            dataIndex: "c",
+            title: "c",
+            width: 100,
+          },
+          {
+            dataIndex: "d",
+            title: "d",
+            width: 100,
+          },
+          {
+            dataIndex: "e",
+            title: "e",
+            width: 100,
+          },
+          {
+            dataIndex: "f",
+            title: "f",
+            width: 100,
+          },
+          {
+            dataIndex: "g",
+            title: "g",
+            width: 100,
+          },
+          {
+            dataIndex: "aa",
+            title: "a1",
+            width: 100,
+          },
+          {
+            dataIndex: "ab",
+            title: "b1",
+            width: 100,
+          },
+          {
+            dataIndex: "ac",
+            title: "c1",
+            width: 100,
+          },
+          {
+            dataIndex: "ad",
+            title: "d1",
+            width: 100,
+          },
+          {
+            dataIndex: "ae",
+            title: "e1",
+            width: 100,
+          },
+          {
+            dataIndex: "af",
+            title: "f1",
+            width: 100,
+          },
+          {
+            dataIndex: "ag",
+            title: "g1",
+            width: 100,
+          },
+        ]}
+        dataSource={[
+          {
+            id: 1,
+            name: "张三",
+            age: 18,
+            sex: "男",
+            isLeaf: false,
+            children: [
+              {
+                id: 11,
+                name: "张三1",
+                age: 118,
+                sex: "男1",
+                isLeaf: false,
+                children: [
+                  {
+                    id: 111,
+                    name: "张三12",
+                    age: 1128,
+                    sex: "男12",
+                    isLeaf: true,
+                    children: [],
+                  },
+                  {
+                    id: 112,
+                    name: "张三13 非叶子无子",
+                    age: 11238,
+                    sex: "男13",
+                    isLeaf: false,
+                    children: [],
+                  },
+                ],
+              },
+              {
+                id: 12,
+                name: "张三2 非叶子无子",
+                age: 128,
+                sex: "男2",
+                isLeaf: false,
+                children: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            name: "张四",
+            age: 19,
+            sex: "男",
+            isLeaf: false,
+            children: [
+              {
+                id: 21,
+                name: "张四1",
+                age: 19,
+                sex: "男",
+                isLeaf: false,
+                children: [],
+              },
+              {
+                id: 22,
+                name: "张四2",
+                age: 19,
+                sex: "男",
+                isLeaf: false,
+                children: [],
+              },
+            ],
+          },
+          {
+            id: 3,
+            name: "赵六",
+            age: 21,
+            sex: "女",
+            isLeaf: false,
+            children: [
+              {
+                id: 31,
+                name: "赵六1",
+                age: 21,
+                sex: "女",
+                isLeaf: false,
+                children: [],
+              },
+              {
+                id: 32,
+                name: "赵六2",
+                age: 21,
+                sex: "女",
+                isLeaf: false,
+                children: [],
+              },
+            ],
+          },
+        ]}
+        defaultOpenRowKeys={[1]}
+        isTreeGroupView
+      />
     </div>
   );
 };

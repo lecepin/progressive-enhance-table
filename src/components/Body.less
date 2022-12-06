@@ -118,6 +118,51 @@
       animation:loadingSvg 2s linear infinite;
       transform-origin:center; 
     }
+
+ 
+
+    &-group-view {
+      &-table{
+        margin-top: 20px;
+
+        &-round{
+          & > tbody {
+            & > tr {
+              &:last-child{
+                & > td{    
+                  &:first-child{
+                    border-bottom-left-radius: var(--round-radius);
+                  }
+                  &:last-child{
+                    border-bottom-right-radius: var(--round-radius);
+                  }
+                }
+              }
+            }
+          }
+        }
+     
+      }
+
+      &-row{
+        &-parent{
+          & > td{
+            border-top: 1px solid var(--color-boder);
+          }
+
+          &-round{
+            & > td{
+              &:first-child{
+                border-top-left-radius: var(--round-radius);
+              }
+              &:last-child{
+                border-top-right-radius: var(--round-radius);
+              }
+            }
+          }          
+        }        
+      }      
+    }
   }
 }
 
