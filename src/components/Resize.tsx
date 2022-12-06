@@ -9,6 +9,7 @@ interface Props {
   refDomTable?: React.MutableRefObject<HTMLDivElement | null>;
   col?: ColumnProps;
   onResizeChange?: (dataIndex: string, value: number) => void;
+  isLast?: boolean;
 }
 
 export default React.memo(function Resize({
@@ -16,6 +17,7 @@ export default React.memo(function Resize({
   refDomTable,
   col,
   onResizeChange,
+  isLast,
 }: Props) {
   const refResize = React.useRef<HTMLDivElement>(null);
 
@@ -33,7 +35,8 @@ export default React.memo(function Resize({
       const { left: tableLeft } = refDomTable.current.getBoundingClientRect();
       const { left: ResizeLeft, width: resizeWidth } =
         refResize.current.getBoundingClientRect();
-      const startFitX = ResizeLeft + resizeWidth / 2 - tableLeft;
+      const startFitX =
+        ResizeLeft + (isLast ? resizeWidth : resizeWidth / 2) - tableLeft;
       const lastClientX = e.clientX;
       let newWidth = col?.width ?? 0;
 
@@ -68,25 +71,20 @@ export default React.memo(function Resize({
     return () => {
       refResize.current.removeEventListener("mousedown", onMouseDown);
     };
-  }, [refResize.current, refDomResizeBar?.current, refDomTable?.current, col]);
+  }, [
+    refResize.current,
+    refDomResizeBar?.current,
+    refDomTable?.current,
+    col,
+    isLast,
+  ]);
 
-  return <div className="PE-Resize" ref={refResize}></div>;
+  return (
+    <div
+      className={classNames("PE-Resize", {
+        "PE-Resize-last": isLast,
+      })}
+      ref={refResize}
+    ></div>
+  );
 });
-
-// onMouseDown = e => {
-//     const { left: tableLeft, width: tableWidth } = this.props.tableEl.getBoundingClientRect();
-//     if (!this.props.cellDomRef || !this.props.cellDomRef.current) {
-//         return;
-//     }
-//     const { left: cellDomLeft } = this.props.cellDomRef.current.getBoundingClientRect();
-//     this.lastPageX = e.pageX;
-//     this.tLeft = tableLeft;
-//     this.tRight = tableWidth;
-//     this.startLeft = e.pageX - tableLeft;
-//     this.cellLeft = cellDomLeft - tableLeft;
-
-//     if (this.props.asyncResizable) this.showResizeProxy();
-//     events.on(document, 'mousemove', this.onMouseMove);
-//     events.on(document, 'mouseup', this.onMouseUp);
-//     this.unSelect();
-// };

@@ -47,12 +47,12 @@ export default React.memo(function Header({
       >
         <ColGroup columns={flatColumn} autoWidth={autoWidth} />
         <thead>
-          {groupColumn?.map?.((groupChild, index, arr) => (
+          {groupColumn?.map?.((groupChild, parentIndex, parentArr) => (
             <tr
-              key={index}
+              key={parentIndex}
               className={classNames("PE-header-row", {
-                "PE-header-row-first": index == 0,
-                "PE-header-row-last": index == arr.length - 1,
+                "PE-header-row-first": parentIndex == 0,
+                "PE-header-row-last": parentIndex == parentArr.length - 1,
               })}
             >
               {groupChild.map((col, index, arr) => {
@@ -109,6 +109,10 @@ export default React.memo(function Header({
                         refDomTable={refDomTable}
                         col={col}
                         onResizeChange={onResizeChange}
+                        isLast={
+                          parentIndex == parentArr.length - 1 &&
+                          index == arr.length - 1
+                        }
                       />
                     ) : null}
                   </th>
