@@ -202,19 +202,22 @@ export default React.memo(
       primaryKey: string,
       callback: (el: HTMLElement | null) => void
     ) => {
-      const el = refTable.current?.querySelector(
-        `:scope > .PE-Body tr[data-primary-id="${primaryKey}"]`
-      ) as HTMLElement;
-      const elHeader = refTable.current?.querySelector(
-        ":scope > .PE-header"
-      ) as HTMLElement;
+      // 可无
+      setTimeout(() => {
+        const el = refTable.current?.querySelector(
+          `:scope > .PE-Body tr[data-primary-id="${primaryKey}"]`
+        ) as HTMLElement;
+        const elHeader = refTable.current?.querySelector(
+          ":scope > .PE-header"
+        ) as HTMLElement;
 
-      if (el && elHeader) {
-        refTable.current.scrollTop +=
-          el.getBoundingClientRect().top -
-          elHeader.getBoundingClientRect().bottom;
-      }
-      callback(el);
+        if (el && elHeader) {
+          refTable.current.scrollTop +=
+            el.getBoundingClientRect().top -
+            elHeader.getBoundingClientRect().bottom;
+        }
+        callback(el);
+      });
     };
 
     // 同步多个区域水平滚动
@@ -234,13 +237,18 @@ export default React.memo(
           syncLockMask(refTable.current, left);
         }
       );
-    }, [refTable.current]);
+    }, [refTable.current, propAutoWidth]);
 
     // Safari 宽度兼容问题，必须先在css中设置宽度100%，随后任意值都可以。不然无效，即便js修改这个值
     React.useEffect(() => {
       if (!refTable.current || propAutoWidth) {
         return;
       }
+
+      const actualWidth = flatColumn.reduce(
+        (pre, cur) => pre + (cur?.width ?? 0),
+        0
+      );
 
       [
         ...Array.from(
@@ -249,10 +257,11 @@ export default React.memo(
         refTable.current.querySelector(":scope > .PE-header > table"),
       ].forEach((el: HTMLElement) => {
         if (el) {
-          el.style.width = "unset";
+          // 解决 td 溢出无法控制的问题
+          el.style.width = actualWidth + "px";
         }
       });
-    }, [refTable.current, propAutoWidth]);
+    }, [refTable.current, propAutoWidth, flatColumn]);
 
     // 处理 Body Resize 后的一些同步问题
     const resizeObserverBody = React.useMemo(
@@ -262,7 +271,7 @@ export default React.memo(
             syncLockMask(refTable.current, entry.target.scrollLeft);
           }
         }),
-      []
+      [propAutoWidth]
     );
 
     React.useEffect(() => {

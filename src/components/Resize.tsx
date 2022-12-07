@@ -32,15 +32,15 @@ export default React.memo(function Resize({
         return;
       }
 
-      const { left: tableLeft } = refDomTable.current.getBoundingClientRect();
+      const { height: tableHeight, top: tableTop } =
+        refDomTable.current.getBoundingClientRect();
       const { left: ResizeLeft, width: resizeWidth } =
         refResize.current.getBoundingClientRect();
-      const startFitX =
-        ResizeLeft + (isLast ? resizeWidth : resizeWidth / 2) - tableLeft;
+      const startFitX = ResizeLeft + (isLast ? resizeWidth : resizeWidth / 2);
       const lastClientX = e.clientX;
       let newWidth = col?.width ?? 0;
 
-      refDomResizeBar.current.style.cssText = `display: block; left: ${startFitX}px;`;
+      refDomResizeBar.current.style.cssText = `display: block; left: ${startFitX}px; height: ${tableHeight}px; top: ${tableTop}px`;
       document.body.style.setProperty("user-select", "none");
       document.body.style.setProperty("cursor", "col-resize");
       document.documentElement.classList.add("PE-Resize-no-select");
@@ -48,7 +48,7 @@ export default React.memo(function Resize({
       const onMouseMove = (e: MouseEvent) => {
         const newLeft = e.clientX - lastClientX + startFitX;
         if (newLeft > startFitX - (col?.width ?? 0) + MIN_W) {
-          refDomResizeBar.current.style.cssText = `display: block; left: ${newLeft}px;`;
+          refDomResizeBar.current.style.cssText = `display: block; left: ${newLeft}px; height: ${tableHeight}px; top: ${tableTop}px`;
           newWidth = (col?.width ?? 0) + e.clientX - lastClientX;
         }
       };
