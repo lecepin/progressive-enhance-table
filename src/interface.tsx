@@ -8,6 +8,7 @@ export interface ColumnProps {
     | ((value: any, index: number, record: any) => any);
   title?: React.ReactElement<any> | React.ReactNode | (() => any);
   width?: number;
+  minWidth?: number;
   align?: "left" | "center" | "right";
   alignHeader?: "left" | "center" | "right";
   lock?: "left" | "right";

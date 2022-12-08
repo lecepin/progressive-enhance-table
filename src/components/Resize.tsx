@@ -47,7 +47,10 @@ export default React.memo(function Resize({
 
       const onMouseMove = (e: MouseEvent) => {
         const newLeft = e.clientX - lastClientX + startFitX;
-        if (newLeft > startFitX - (col?.width ?? 0) + MIN_W) {
+        if (
+          newLeft >
+          startFitX - (col?.width ?? 0) + (col?.minWidth || MIN_W)
+        ) {
           refDomResizeBar.current.style.cssText = `display: block; left: ${newLeft}px; height: ${tableHeight}px; top: ${tableTop}px`;
           newWidth = (col?.width ?? 0) + e.clientX - lastClientX;
         }
