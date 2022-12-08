@@ -241,6 +241,7 @@ export default React.memo(function BodyTree({
   const renderTable = () => {
     let tableArr: Array<Array<any>> = [];
     let tableIndex = -1;
+    const notRenderCellIndex: Array<Array<any>> = [];
 
     flatDataSource?.map((row, rowIndex, arr) => {
       const isOpen = openRowKeys.includes(row[primaryKey]);
@@ -265,9 +266,29 @@ export default React.memo(function BodyTree({
         >
           {flatColumn?.map((col, colIndex, arr) => {
             const lockStyle: React.CSSProperties = {};
+            // 合并单元格处理
+            const matchCellIndex = notRenderCellIndex
+              .map((cellIndex) => cellIndex.toString())
+              .indexOf([rowIndex, colIndex].toString());
+
+            if (matchCellIndex > -1) {
+              // 此处删不删数组中的项，其实无所谓
+              notRenderCellIndex.splice(matchCellIndex, 1);
+              return null;
+            }
 
             const attrs =
               cellProps?.(rowIndex, colIndex, col?.dataIndex, row) || {};
+
+            // warning: tree 下不建议合并行
+            // 下面这种合并方法虽然会多一个当前的进去，但再下次渲染的时候，会清空掉，也还好
+            if (attrs.colSpan > 1 || attrs.rowSpan > 1) {
+              for (let i = 0; i < (attrs.colSpan ?? 1); i++) {
+                for (let j = 0; j < (attrs.rowSpan ?? 1); j++) {
+                  notRenderCellIndex.push([rowIndex + j, colIndex + i]);
+                }
+              }
+            }
 
             if (!autoWidth) {
               if (
