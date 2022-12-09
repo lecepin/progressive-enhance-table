@@ -1,7 +1,11 @@
 # Progressive Enhance Table
 
-install
+#### install
 
 ```
 npm i -S pe-table
 ```
+
+#### notice
+
+安装方需要支持 less loader。
