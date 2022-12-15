@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as classNames from "classnames";
 import { TableProps, ColumnProps } from "./interface";
-import * as utils from "./utils";
 import Loading from "./components/Loading";
 import Header from "./components/Header";
 import Body from "./components/Body";
@@ -179,13 +178,6 @@ export default React.memo(
         const elRight = refTable?.querySelector(
           ":scope > .PETable-lock-mask-right"
         ) as HTMLElement;
-        const elBody = refTable?.querySelector(
-          ":scope > .PE-Body"
-        ) as HTMLElement;
-
-        if (!elBody) {
-          return;
-        }
 
         if (elLeft) {
           elLeft.style.display = left > 0 ? "block" : "none";
@@ -193,7 +185,9 @@ export default React.memo(
 
         if (elRight) {
           elRight.style.display =
-            left < elBody.scrollWidth - elBody.clientWidth ? "block" : "none";
+            left < refTable.scrollWidth - refTable.clientWidth
+              ? "block"
+              : "none";
         }
       }
     };
@@ -226,17 +220,7 @@ export default React.memo(
         return;
       }
 
-      syncLockMask(refTable.current, 0);
-
-      return utils.syncScrollX(
-        [
-          refTable.current.querySelector(":scope > .PE-Body"),
-          refTable.current.querySelector(":scope > .PE-header"),
-        ],
-        (left) => {
-          syncLockMask(refTable.current, left);
-        }
-      );
+      syncLockMask(refTable.current, refTable.current.scrollLeft);
     }, [refTable.current, propAutoWidth]);
 
     // Safari 宽度兼容问题，必须先在css中设置宽度100%，随后任意值都可以。不然无效，即便js修改这个值
@@ -263,8 +247,8 @@ export default React.memo(
       });
     }, [refTable.current, propAutoWidth, flatColumn]);
 
-    // 处理 Body Resize 后的一些同步问题
-    const resizeObserverBody = React.useMemo(
+    // 处理 容器 Resize 后的一些同步问题
+    const resizeObserverContainer = React.useMemo(
       () =>
         new ResizeObserver((entries) => {
           for (const entry of entries) {
@@ -275,21 +259,34 @@ export default React.memo(
     );
 
     React.useEffect(() => {
-      const elBody = refTable.current?.querySelector(":scope > .PE-Body");
-      if (!elBody) {
+      if (!refTable.current) {
         return;
       }
 
-      resizeObserverBody.observe(elBody);
+      resizeObserverContainer.observe(refTable.current);
 
       return () => {
-        resizeObserverBody.disconnect();
+        resizeObserverContainer.disconnect();
       };
-    }, [
-      resizeObserverBody,
-      refTable.current?.querySelector(":scope > .PE-Body"),
-      props.columns,
-    ]);
+    }, [resizeObserverContainer, refTable.current, props.columns]);
+
+    // 监听滚动条
+    React.useEffect(() => {
+      const listener = () => {
+        syncLockMask(refTable.current, refTable.current.scrollLeft);
+      };
+
+      refTable.current.addEventListener(
+        "scroll",
+        listener,
+        // 提升性能，不会阻止默认事件
+        { passive: true }
+      );
+
+      return () => {
+        refTable.current.removeEventListener("scroll", listener);
+      };
+    }, [refTable.current]);
 
     return (
       <Loading visible={propLoading}>

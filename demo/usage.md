@@ -296,19 +296,14 @@ const App = () => {
     <div>
       <h5>常规</h5>
       <PETable {...props} />
-
       <h5>自动宽度</h5>
       <PETable autoWidth {...props} />
-
       <h5>自动宽度 & 圆角</h5>
       <PETable autoWidth round {...props} />
-
       <h5>自动宽度 & 圆角 & 加载中</h5>
       <PETable loading autoWidth {...props} round />
-
       <h5>自动宽度 & 圆角 & 空数据</h5>
       <PETable autoWidth {...props} dataSource={[]} round />
-
       <h5>自动宽度 & 圆角 & 合并单元格</h5>
       <PETable
         autoWidth
@@ -324,7 +319,6 @@ const App = () => {
           }
         }}
       />
-
       <h5>自动宽度 & 圆角 & 最大高度</h5>
       <PETable
         autoWidth
@@ -340,6 +334,114 @@ const App = () => {
           { id: 12, name: "李四", sex: "女", age: "28" },
           { id: 13, name: "王五", sex: "女", age: "48" },
           { id: 14, name: "赵六", sex: "男", age: "8" },
+        ]}
+      />
+      <h5> 圆角 & 最大高度 & 水平滚动 & 冻结列</h5>
+      <PETable
+        round
+        {...props}
+        maxHeight={200}
+        dataSource={[
+          { id: 1, name: "张三", sex: "男", age: "18" },
+          { id: 2, name: "李四", sex: "女", age: "28" },
+          { id: 3, name: "王五", sex: "女", age: "48" },
+          { id: 4, name: "赵六", sex: "男", age: "8" },
+          { id: 11, name: "张三", sex: "男", age: "18" },
+          { id: 12, name: "李四", sex: "女", age: "28" },
+          { id: 13, name: "王五", sex: "女", age: "48" },
+          { id: 14, name: "赵六", sex: "男", age: "8" },
+        ]}
+        columns={[
+          {
+            dataIndex: "name",
+            title: "姓名",
+            alignHeader: "center",
+            align: "center",
+            width: 100,
+            lock: "left",
+          },
+          {
+            dataIndex: "sex",
+            title: "性别",
+            width: 100,
+            lock: "left",
+          },
+          {
+            dataIndex: "age",
+            title: "年龄",
+            width: 100,
+            lock: "right",
+          },
+          {
+            dataIndex: "age",
+            title: "a",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "b",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "c",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "d",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "e",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "f",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "g",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "a1",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "b1",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "c1",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "d1",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "e1",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "f1",
+            width: 100,
+          },
+          {
+            dataIndex: "age",
+            title: "g1",
+            width: 100,
+          },
         ]}
       />
 
@@ -407,7 +509,6 @@ const App = () => {
           },
         ]}
       />
-
       <h5> 圆角 & 冻结列</h5>
       <PETable
         round
@@ -505,7 +606,6 @@ const App = () => {
           },
         ]}
       />
-
       <h5>圆角 & 冻结列 & 列宽调整</h5>
       <PETable
         round
@@ -530,9 +630,7 @@ const App = () => {
           setResizeCols2([...resizeCols2]);
         }}
       />
-
       <br />
-
       <PETable
         {...props}
         round
@@ -556,7 +654,6 @@ const App = () => {
           setResizeCols1([...resizeCols1]);
         }}
       />
-
       <h5>自动宽度 & 圆角 & 树型</h5>
       <PETable
         round
@@ -627,7 +724,6 @@ const App = () => {
         ]}
         defaultOpenRowKeys={[1]}
       />
-
       <h5>圆角 & 冻结列 & 列宽调整 & 树型 & 异步</h5>
       <PETable
         isTree
@@ -698,7 +794,6 @@ const App = () => {
           });
         }}
       />
-
       <h5>自动宽度 & 圆角 & 树型 & 冻结列 & groupView</h5>
       <PETable
         isTree
@@ -892,7 +987,6 @@ const App = () => {
         defaultOpenRowKeys={[1]}
         isTreeGroupView
       />
-
       <h5>自动宽度 & 圆角 & 最大高度 & 滚动到指定 id 行</h5>
       <button
         onClick={() => {
@@ -924,7 +1018,6 @@ const App = () => {
           { id: 144, name: "赵六12", sex: "男", age: "8" },
         ]}
       />
-
       <h5>常规 & 行高</h5>
       <PETable {...props} rowHeight={50} />
     </div>
