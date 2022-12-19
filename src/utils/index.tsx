@@ -1,3 +1,5 @@
+import LpLogger from "lp-logger";
+
 export function syncScrollX(
   elements: HTMLElement[],
   callback?: (scrollLeft: number) => void
@@ -41,3 +43,9 @@ export function syncScrollX(
     });
   };
 }
+
+export const logger = new LpLogger({
+  name: "PE-Table",
+  level: "warn",
+  search: "pe-log",
+});

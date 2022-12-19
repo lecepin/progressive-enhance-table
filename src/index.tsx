@@ -5,6 +5,7 @@ import Loading from "./components/Loading";
 import Header from "./components/Header";
 import Body from "./components/Body";
 import BodyTree from "./components/BodyTree";
+import { logger } from "./utils";
 
 import "./index.less";
 
@@ -248,15 +249,15 @@ export default React.memo(
     }, [refTable.current, propAutoWidth, flatColumn]);
 
     // 处理 容器 Resize 后的一些同步问题
-    const resizeObserverContainer = React.useMemo(
-      () =>
-        new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            syncLockMask(refTable.current, entry.target.scrollLeft);
-          }
-        }),
-      [propAutoWidth]
-    );
+    const resizeObserverContainer = React.useMemo(() => {
+      logger.log("resizeObserverContainer create");
+      return new ResizeObserver((entries) => {
+        logger.log("resizeObserverContainer callback");
+        for (const entry of entries) {
+          syncLockMask(refTable.current, entry.target.scrollLeft);
+        }
+      });
+    }, [propAutoWidth]);
 
     React.useEffect(() => {
       if (!refTable.current) {
@@ -264,9 +265,11 @@ export default React.memo(
       }
 
       resizeObserverContainer.observe(refTable.current);
+      logger.log("ResizeObserverContainer observe");
 
       return () => {
         resizeObserverContainer.disconnect();
+        logger.log("ResizeObserverContainer disconnect");
       };
     }, [resizeObserverContainer, refTable.current, props.columns]);
 
