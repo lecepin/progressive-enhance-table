@@ -43,7 +43,7 @@
     position: absolute;
     // safari 
     top: 1px;    
-    bottom: 10px;
+    bottom: 1px;
     overflow: hidden;
     pointer-events: none;
     z-index: 4;
@@ -83,5 +83,9 @@
 
   &-round{
     border-radius: var(--round-radius);
+  }
+
+  &-no-event{
+    pointer-events: none;
   }
 }

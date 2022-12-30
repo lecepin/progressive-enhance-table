@@ -1,6 +1,6 @@
 {
   "name": "pe-table",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "intro component",
   "files": [
     "demo/",
@@ -34,20 +34,22 @@
   "dependencies": {
     "ahooks": "^3.7.2",
     "classnames": "^2.3.2",
+    "lodash": "^4.17.21",
     "lp-logger": "^1.0.7"
   },
   "devDependencies": {
+    "@iceworks/spec": "^1.0.0",
+    "@types/lodash": "^4.14.191",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
     "build-plugin-component": "^1.0.0",
     "build-scripts": "^1.1.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.14.0",
-    "@iceworks/spec": "^1.0.0",
     "eslint": "^7.0.0",
-    "stylelint": "^13.7.2",
-    "@types/react": "^17.0.2",
-    "@types/react-dom": "^17.0.2"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "stylelint": "^13.7.2"
   },
   "peerDependencies": {
     "react": "^16 || ^17"
@@ -61,5 +63,5 @@
     "access": "public"
   },
   "license": "MIT",
-  "homepage": "https://unpkg.com/pe-table@0.1.2/build/index.html"
+  "homepage": "https://unpkg.com/pe-table@0.1.3/build/index.html"
 }

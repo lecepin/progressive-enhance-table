@@ -27,6 +27,7 @@ export default React.memo(
 
     const refTable = React.useRef<HTMLDivElement>(null);
     const refReszieBar = React.useRef<HTMLDivElement>(null);
+    const refBody = React.useRef<any>(null);
 
     React.useImperativeHandle(ref, () => ({
       ref: refTable?.current,
@@ -255,6 +256,11 @@ export default React.memo(
         logger.log("resizeObserverContainer callback");
         for (const entry of entries) {
           syncLockMask(refTable.current, entry.target.scrollLeft);
+
+          // 虚拟滚动使用
+          if (props.useVirtual) {
+            refBody.current?.resizeForV?.(entry.target);
+          }
         }
       });
     }, [propAutoWidth]);
@@ -277,6 +283,10 @@ export default React.memo(
     React.useEffect(() => {
       const listener = () => {
         syncLockMask(refTable.current, refTable.current.scrollLeft);
+
+        if (props.useVirtual) {
+          refBody.current?.scrollForV?.(refTable.current);
+        }
       };
 
       refTable.current.addEventListener(
@@ -289,7 +299,7 @@ export default React.memo(
       return () => {
         refTable.current.removeEventListener("scroll", listener);
       };
-    }, [refTable.current]);
+    }, [refTable.current, refBody.current, props.useVirtual]);
 
     return (
       <Loading visible={propLoading}>
@@ -343,6 +353,7 @@ export default React.memo(
             />
           ) : (
             <Body
+              ref={refBody}
               cellProps={props.cellProps}
               emptyContent={props.emptyContent}
               dataSource={props.dataSource}
@@ -354,6 +365,8 @@ export default React.memo(
               lockRightColumns={lockRightArray}
               primaryKey={propPrimaryKey}
               rowHeight={propRowHeight}
+              useVirtual={props.useVirtual}
+              mergedCellsStickToTop={props.mergedCellsStickToTop}
             />
           )}
 

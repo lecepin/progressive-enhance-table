@@ -48,5 +48,6 @@ export interface TableProps {
   isTreeGroupView?: boolean;
   autoWidth?: boolean;
   round?: boolean;
-  useVirtual?:boolean;
+  useVirtual?: boolean;
+  mergedCellsStickToTop?: boolean;
 }
