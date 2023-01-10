@@ -49,5 +49,5 @@ export interface TableProps {
   autoWidth?: boolean;
   round?: boolean;
   useVirtual?: boolean;
-  mergedCellsStickToTop?: boolean;
+  mergedCellsStick?: boolean;
 }

@@ -366,7 +366,8 @@ export default React.memo(
               primaryKey={propPrimaryKey}
               rowHeight={propRowHeight}
               useVirtual={props.useVirtual}
-              mergedCellsStickToTop={props.mergedCellsStickToTop}
+              mergedCellsStick={props.mergedCellsStick}
+              refDomTable={refTable}
             />
           )}
 

@@ -25,7 +25,8 @@ interface Props {
   rowHeight?: number;
   primaryKey?: string;
   useVirtual?: boolean;
-  mergedCellsStickToTop?: boolean;
+  mergedCellsStick?: boolean;
+  refDomTable?: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 interface PositionForV {
@@ -58,7 +59,8 @@ export default React.memo(
       primaryKey,
       rowHeight,
       useVirtual,
-      mergedCellsStickToTop,
+      mergedCellsStick,
+      refDomTable,
     }: Props,
     ref
   ) {
@@ -66,8 +68,11 @@ export default React.memo(
 
     const notRenderCellIndex: Array<Array<any>> = [];
     const domHeaderHeight =
-      document.querySelector(".PE-header")?.getBoundingClientRect()?.height ||
-      0;
+      (
+        refDomTable?.current?.querySelector(
+          ":scope > .PE-header"
+        ) as HTMLElement
+      )?.getBoundingClientRect()?.height || 0;
 
     // ⬇⬇⬇ 虚拟滚动专用 ⬇⬇⬇
     const [visibleData, setVisibleData] = React.useState<Array<any>>([]);
@@ -221,7 +226,7 @@ export default React.memo(
     // 获取实际 Row DOM 的高度
     React.useLayoutEffect(() => {
       if (useVirtual && refTbody.current?.children?.length) {
-        const domTable = document.querySelector(".PETable");
+        const domTable = refDomTable?.current;
 
         if (!domTable) {
           return;
@@ -362,11 +367,14 @@ export default React.memo(
                           }
                         }
 
-                        if (mergedCellsStickToTop) {
+                        if (mergedCellsStick) {
                           renderContent = (
                             <div
                               className="PE-Body-cell-merged-stick-to-top"
-                              style={{ top: domHeaderHeight }}
+                              style={{
+                                top: domHeaderHeight,
+                                bottom: 0,
+                              }}
                             >
                               {renderContent}
                             </div>
