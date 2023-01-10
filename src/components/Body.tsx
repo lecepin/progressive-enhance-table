@@ -202,11 +202,16 @@ export default React.memo(
         ...bufferBottom,
       ];
 
-      paddingTop.current = bufferTop.length
+      const _paddingTop = bufferTop.length
         ? positionforV.current[startIndex.current].top -
           positionforV.current[startIndex.current - 1].height
         : 0;
-      setVisibleData(visibleData);
+
+      // 优化。防止每次滚动都渲染
+      if (paddingTop.current != _paddingTop || _paddingTop == 0) {
+        paddingTop.current = _paddingTop;
+        setVisibleData(visibleData);
+      }
     };
 
     // 初始化位置信息
