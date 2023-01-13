@@ -297,7 +297,7 @@ export default React.memo(
       );
 
       return () => {
-        refTable.current.removeEventListener("scroll", listener);
+        refTable.current?.removeEventListener?.("scroll", listener);
       };
     }, [refTable.current, refBody.current, props.useVirtual]);
 
