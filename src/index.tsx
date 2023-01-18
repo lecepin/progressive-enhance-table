@@ -301,6 +301,13 @@ export default React.memo(
       };
     }, [refTable.current, refBody.current, props.useVirtual]);
 
+    // dataSource 更新后 重置滚动条
+    React.useEffect(() => {
+      if (refTable.current && props.resetScrollbarPosition === true) {
+        refTable.current.scrollTo?.(0, 0);
+      }
+    }, [props.dataSource, props.resetScrollbarPosition]);
+
     return (
       <Loading visible={propLoading}>
         <div

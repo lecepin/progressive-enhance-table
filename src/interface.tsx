@@ -50,4 +50,6 @@ export interface TableProps {
   round?: boolean;
   useVirtual?: boolean;
   mergedCellsStick?: boolean;
+  // dataSource 变化时，重置滚动条位置为 0
+  resetScrollbarPosition?: boolean;
 }

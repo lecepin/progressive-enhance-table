@@ -72,7 +72,7 @@ export default React.memo(function Resize({
     refResize.current.addEventListener("mousedown", onMouseDown);
 
     return () => {
-      refResize.current.removeEventListener("mousedown", onMouseDown);
+      refResize.current?.removeEventListener?.("mousedown", onMouseDown);
     };
   }, [
     refResize.current,

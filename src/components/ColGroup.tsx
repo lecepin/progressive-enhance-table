@@ -15,7 +15,7 @@ export default React.memo(function ColGroup({
       {columns.map((col, index) => (
         <col
           style={{
-            width: col?.width,
+            width: autoWidth ? "unset" : col?.width,
             minWidth: autoWidth ? "unset" : col?.width,
             maxWidth: autoWidth ? "unset" : col?.width,
           }}
