@@ -198,13 +198,33 @@ export default React.memo(
       primaryKey: string,
       callback: (el: HTMLElement | null) => void
     ) => {
-      // 可无
+      const elHeader = refTable.current?.querySelector(
+        ":scope > .PE-header"
+      ) as HTMLElement;
+
+      if (props.useVirtual) {
+        if (props.isTree) {
+        } else {
+          if (!refTable.current) {
+            return;
+          }
+
+          // 查找到位置信息 然后滚动过去 进行渲染后 再查询元素
+          const positionInfo =
+            refBody.current.getPositionInfoByPrimaryId?.(primaryKey);
+          const maxScrollTop =
+            refTable.current.scrollHeight - refTable.current.clientHeight;
+
+          if (!positionInfo?.top) {
+            return;
+          }
+
+          refTable.current.scrollTop = Math.min(maxScrollTop, positionInfo.top);
+        }
+      }
       setTimeout(() => {
         const el = refTable.current?.querySelector(
           `:scope > .PE-Body tr[data-primary-id="${primaryKey}"]`
-        ) as HTMLElement;
-        const elHeader = refTable.current?.querySelector(
-          ":scope > .PE-header"
         ) as HTMLElement;
 
         if (el && elHeader) {

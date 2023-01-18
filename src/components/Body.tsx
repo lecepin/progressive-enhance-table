@@ -34,6 +34,7 @@ interface PositionForV {
   top: number;
   bottom: number;
   height: number;
+  primaryId: string;
 }
 
 interface SpanArea {
@@ -64,7 +65,11 @@ export default React.memo(
     }: Props,
     ref
   ) {
-    React.useImperativeHandle(ref, () => ({ resizeForV, scrollForV }));
+    React.useImperativeHandle(ref, () => ({
+      resizeForV,
+      scrollForV,
+      getPositionInfoByPrimaryId,
+    }));
 
     const notRenderCellIndex: Array<Array<any>> = [];
     const domHeaderHeight =
@@ -184,6 +189,11 @@ export default React.memo(
       endIndex = startIndex.current + visibleCount.current;
       updateVisibleDataAndLayout();
     };
+    const getPositionInfoByPrimaryId = (primaryId: string) => {
+      return positionforV.current?.find?.(
+        (item) => item.primaryId === primaryId
+      );
+    };
     const updateVisibleDataAndLayout = () => {
       // buffer 区域
       const bufferTop = dataSource.slice(
@@ -217,12 +227,13 @@ export default React.memo(
     // 初始化位置信息
     React.useEffect(() => {
       if (useVirtual) {
-        positionforV.current = dataSource.map((_, index) => {
+        positionforV.current = dataSource.map((row, index) => {
           return {
             rIndex: index,
             top: index * rowHeight,
             bottom: (index + 1) * rowHeight,
             height: rowHeight,
+            primaryId: row[primaryKey],
           };
         });
       }
