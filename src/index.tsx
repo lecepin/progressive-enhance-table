@@ -222,6 +222,8 @@ export default React.memo(
           refTable.current.scrollTop = Math.min(maxScrollTop, positionInfo.top);
         }
       }
+
+      // 等待上面部分渲染完成，否则找不到元素
       setTimeout(() => {
         const el = refTable.current?.querySelector(
           `:scope > .PE-Body tr[data-primary-id="${primaryKey}"]`
@@ -233,7 +235,7 @@ export default React.memo(
             elHeader.getBoundingClientRect().bottom;
         }
         callback(el);
-      });
+      }, 50);
     };
 
     // 同步多个区域水平滚动
