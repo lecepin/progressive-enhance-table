@@ -34,11 +34,12 @@ export default React.memo(
       ref: refTable?.current,
       scrollToViewByPrimaryKey,
       delRow,
+      getDataSource: () => dataSource,
     }));
 
     React.useEffect(() => {
       setDataSource(props.dataSource);
-    }, props.dataSource);
+    }, [props.dataSource]);
 
     const [
       flatColumn,
