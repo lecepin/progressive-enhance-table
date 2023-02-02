@@ -28,11 +28,17 @@ export default React.memo(
     const refTable = React.useRef<HTMLDivElement>(null);
     const refReszieBar = React.useRef<HTMLDivElement>(null);
     const refBody = React.useRef<any>(null);
+    const [dataSource, setDataSource] = React.useState<Array<any>>([]);
 
     React.useImperativeHandle(ref, () => ({
       ref: refTable?.current,
       scrollToViewByPrimaryKey,
+      delRow,
     }));
+
+    React.useEffect(() => {
+      setDataSource(props.dataSource);
+    }, props.dataSource);
 
     const [
       flatColumn,
@@ -238,6 +244,19 @@ export default React.memo(
       }, 50);
     };
 
+    const delRow = (primaryId: string) => {
+      // 删除数组项目
+      const index = dataSource.findIndex(
+        (item) => item[propPrimaryKey] === primaryId
+      );
+
+      if (index > -1) {
+        dataSource.splice(index, 1);
+
+        refBody.current?.delRow?.(primaryId);
+      }
+    };
+
     // 同步多个区域水平滚动
     React.useEffect(() => {
       if (!refTable.current) {
@@ -328,7 +347,7 @@ export default React.memo(
       if (refTable.current && props.resetScrollbarPosition === true) {
         refTable.current.scrollTo?.(0, 0);
       }
-    }, [props.dataSource, props.resetScrollbarPosition]);
+    }, [dataSource, props.resetScrollbarPosition]);
 
     return (
       <Loading visible={propLoading}>
@@ -364,7 +383,7 @@ export default React.memo(
             <BodyTree
               cellProps={props.cellProps}
               emptyContent={props.emptyContent}
-              dataSource={props.dataSource}
+              dataSource={dataSource}
               flatColumn={flatColumn}
               autoWidth={propAutoWidth}
               round={propRound}
@@ -385,7 +404,7 @@ export default React.memo(
               ref={refBody}
               cellProps={props.cellProps}
               emptyContent={props.emptyContent}
-              dataSource={props.dataSource}
+              dataSource={dataSource}
               flatColumn={flatColumn}
               autoWidth={propAutoWidth}
               round={propRound}

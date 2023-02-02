@@ -69,6 +69,7 @@ export default React.memo(
       resizeForV,
       scrollForV,
       getPositionInfoByPrimaryId,
+      delRow,
     }));
 
     const notRenderCellIndex: Array<Array<any>> = [];
@@ -133,7 +134,8 @@ export default React.memo(
     }, [dataSource, flatColumn, useVirtual]);
 
     let endIndex = 0;
-    const resizeForV = (refPETable: HTMLElement) => {
+    const resizeForV = (refPETable: HTMLElement, forceRender = false) => {
+      if (!refPETable) return;
       if (useVirtual) {
         const height =
           refPETable.getBoundingClientRect().height - domHeaderHeight;
@@ -141,10 +143,12 @@ export default React.memo(
         visibleCount.current = Math.ceil(height / rowHeight);
         endIndex = startIndex.current + visibleCount.current;
 
-        updateVisibleDataAndLayout();
+        updateVisibleDataAndLayout(forceRender);
       }
     };
     const scrollForV = (refPETable: HTMLElement) => {
+      if (!refPETable) return;
+
       refPEBody.current.classList.add("PETable-no-event");
       const binarySearch = (list: Array<any>, value: any) => {
         let start = 0;
@@ -194,7 +198,7 @@ export default React.memo(
         (item) => item.primaryId === primaryId
       );
     };
-    const updateVisibleDataAndLayout = () => {
+    const updateVisibleDataAndLayout = (forceRender = false) => {
       // buffer 区域
       const bufferTop = dataSource.slice(
         startIndex.current - bufferCount.current,
@@ -218,9 +222,36 @@ export default React.memo(
         : 0;
 
       // 优化。防止每次滚动都渲染
-      if (paddingTop.current != _paddingTop || _paddingTop == 0) {
+      if (
+        paddingTop.current != _paddingTop ||
+        _paddingTop == 0 ||
+        forceRender
+      ) {
         paddingTop.current = _paddingTop;
         setVisibleData(visibleData);
+      }
+    };
+    const delRow = (primaryId: string) => {
+      // 删除数组项目
+      const index = positionforV.current.findIndex(
+        (item) => item.primaryId === primaryId
+      );
+
+      if (index > -1) {
+        // 更新后面的数据的位置信息
+        for (let i = index + 1; i < positionforV.current.length; i++) {
+          if (i === index + 1) {
+            positionforV.current[i].top = positionforV.current[i - 1].top;
+          } else {
+            positionforV.current[i].top = positionforV.current[i - 1].bottom;
+          }
+
+          positionforV.current[i].bottom =
+            positionforV.current[i].top + positionforV.current[i].height;
+        }
+
+        positionforV.current.splice(index, 1);
+        resizeForV(refDomTable.current, true);
       }
     };
 
