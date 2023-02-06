@@ -311,7 +311,8 @@ export default React.memo(
 
     if (useVirtual) {
       stylePeBody["height"] =
-        positionforV.current[positionforV.current.length - 1]?.bottom || 0;
+        positionforV.current[positionforV.current.length - 1]?.bottom ||
+        "unset";
       stylePeBody["paddingTop"] = paddingTop.current;
     }
 

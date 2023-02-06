@@ -28,6 +28,7 @@ export default React.memo(
     const refTable = React.useRef<HTMLDivElement>(null);
     const refReszieBar = React.useRef<HTMLDivElement>(null);
     const refBody = React.useRef<any>(null);
+    const refBodyTree = React.useRef<any>(null);
     const [dataSource, setDataSource] = React.useState<Array<any>>([]);
 
     React.useImperativeHandle(ref, () => ({
@@ -35,6 +36,7 @@ export default React.memo(
       scrollToViewByPrimaryKey,
       delRow,
       getDataSource: () => dataSource,
+      modifyRow,
     }));
 
     React.useEffect(() => {
@@ -210,24 +212,22 @@ export default React.memo(
       ) as HTMLElement;
 
       if (props.useVirtual) {
-        if (props.isTree) {
-        } else {
-          if (!refTable.current) {
-            return;
-          }
-
-          // 查找到位置信息 然后滚动过去 进行渲染后 再查询元素
-          const positionInfo =
-            refBody.current.getPositionInfoByPrimaryId?.(primaryKey);
-          const maxScrollTop =
-            refTable.current.scrollHeight - refTable.current.clientHeight;
-
-          if (!positionInfo?.top) {
-            return;
-          }
-
-          refTable.current.scrollTop = Math.min(maxScrollTop, positionInfo.top);
+        if (!refTable.current) {
+          return;
         }
+
+        // 查找到位置信息 然后滚动过去 进行渲染后 再查询元素
+        const positionInfo = props.isTree
+          ? refBodyTree.current.getPositionInfoByPrimaryId?.(primaryKey)
+          : refBody.current.getPositionInfoByPrimaryId?.(primaryKey);
+        const maxScrollTop =
+          refTable.current.scrollHeight - refTable.current.clientHeight;
+
+        if (!positionInfo?.top) {
+          return;
+        }
+
+        refTable.current.scrollTop = Math.min(maxScrollTop, positionInfo.top);
       }
 
       // 等待上面部分渲染完成，否则找不到元素
@@ -254,8 +254,22 @@ export default React.memo(
       if (index > -1) {
         dataSource.splice(index, 1);
 
-        refBody.current?.delRow?.(primaryId);
+        props.isTree
+          ? refBodyTree.current?.delRow?.(primaryId)
+          : refBody.current?.delRow?.(primaryId);
       }
+    };
+
+    const modifyRow = (
+      primaryId: string,
+      callback?: (data: any) => any,
+      forceRender = true
+    ) => {
+      if (!refBodyTree.current) {
+        return;
+      }
+
+      refBodyTree.current.modifyRow(primaryId, callback, forceRender);
     };
 
     // 同步多个区域水平滚动
@@ -278,17 +292,21 @@ export default React.memo(
         0
       );
 
-      [
-        ...Array.from(
-          refTable.current.querySelectorAll(":scope > .PE-Body > table")
-        ),
-        refTable.current.querySelector(":scope > .PE-header > table"),
-      ].forEach((el: HTMLElement) => {
-        if (el) {
-          // 解决 td 溢出无法控制的问题
-          el.style.width = actualWidth + "px";
-        }
-      });
+      // 丢失 body el 问题
+      setTimeout(() => {
+        [
+          ...Array.from(
+            refTable.current?.querySelectorAll?.(":scope > .PE-Body > table") ||
+              []
+          ),
+          refTable.current?.querySelector?.(":scope > .PE-header > table"),
+        ].forEach((el: HTMLElement) => {
+          if (el) {
+            // 解决 td 溢出无法控制的问题
+            el.style.width = actualWidth + "px";
+          }
+        });
+      }, 15);
     }, [refTable.current, propAutoWidth, flatColumn]);
 
     // 处理 容器 Resize 后的一些同步问题
@@ -301,7 +319,9 @@ export default React.memo(
 
           // 虚拟滚动使用
           if (props.useVirtual) {
-            refBody.current?.resizeForV?.(entry.target);
+            props.isTree
+              ? refBodyTree.current?.resizeForV?.(entry.target)
+              : refBody.current?.resizeForV?.(entry.target);
           }
         }
       });
@@ -327,7 +347,9 @@ export default React.memo(
         syncLockMask(refTable.current, refTable.current.scrollLeft);
 
         if (props.useVirtual) {
-          refBody.current?.scrollForV?.(refTable.current);
+          props.isTree
+            ? refBodyTree.current?.scrollForV?.(refTable.current)
+            : refBody.current?.scrollForV?.(refTable.current);
         }
       };
 
@@ -341,7 +363,13 @@ export default React.memo(
       return () => {
         refTable.current?.removeEventListener?.("scroll", listener);
       };
-    }, [refTable.current, refBody.current, props.useVirtual]);
+    }, [
+      refTable.current,
+      refBody.current,
+      refBodyTree.current,
+      props.useVirtual,
+      props.isTree,
+    ]);
 
     // dataSource 更新后 重置滚动条
     React.useEffect(() => {
@@ -382,6 +410,7 @@ export default React.memo(
           />
           {props.isTree ? (
             <BodyTree
+              ref={refBodyTree}
               cellProps={props.cellProps}
               emptyContent={props.emptyContent}
               dataSource={dataSource}
@@ -399,6 +428,8 @@ export default React.memo(
               defaultOpenRowKeys={props.defaultOpenRowKeys}
               isTreeGroupView={props.isTreeGroupView}
               rowHeight={propRowHeight}
+              refDomTable={refTable}
+              useVirtual={props.useVirtual}
             />
           ) : (
             <Body

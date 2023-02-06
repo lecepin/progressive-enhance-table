@@ -1,7 +1,9 @@
 import * as React from "react";
 import * as classNames from "classnames";
+import { debounce } from "lodash";
 import ColGroup from "./ColGroup";
 import { ColumnProps } from "./../interface";
+import CellRender from "./CellRender";
 
 import "./Body.less";
 
@@ -35,6 +37,8 @@ interface Props {
     currentRecord: any
   ) => void;
   isTreeGroupView?: boolean;
+  refDomTable?: React.MutableRefObject<HTMLDivElement | null>;
+  useVirtual?: boolean;
 }
 
 interface TreeNodeHandleParams {
@@ -43,6 +47,16 @@ interface TreeNodeHandleParams {
   dataSource: Array<any>;
   openRowKeys: Array<any>;
   e?: MouseEvent;
+  originOpenRowKeys: Array<any>;
+}
+
+interface PositionForV {
+  rIndex: number;
+  top: number;
+  bottom: number;
+  height: number;
+  primaryId: string;
+  isFirstTr: boolean;
 }
 
 const iconFold = (
@@ -91,355 +105,783 @@ const iconLoading = (
   </svg>
 );
 
-export default React.memo(function BodyTree({
-  dataSource,
-  flatColumn = [],
-  emptyContent,
-  autoWidth,
-  round,
-  loading,
-  cellProps,
-  lockLeftColumns = [],
-  lockRightColumns = [],
-  openRowKeys: propOpenRowKeys,
-  defaultOpenRowKeys = [],
-  loadData,
-  indent = 20,
-  primaryKey,
-  onRowOpen,
-  isTreeGroupView,
-  rowHeight,
-}: Props) {
-  const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
-  const [loadingKeys, setLoadingKeys] = React.useState([]);
+export default React.memo(
+  React.forwardRef(function BodyTree(
+    {
+      dataSource,
+      flatColumn = [],
+      emptyContent,
+      autoWidth,
+      round,
+      loading,
+      cellProps,
+      lockLeftColumns = [],
+      lockRightColumns = [],
+      openRowKeys: propOpenRowKeys,
+      defaultOpenRowKeys = [],
+      loadData,
+      indent = 20,
+      primaryKey,
+      onRowOpen,
+      isTreeGroupView,
+      rowHeight,
+      useVirtual,
+      refDomTable,
+    }: Props,
+    ref
+  ) {
+    React.useImperativeHandle(ref, () => ({
+      resizeForV,
+      scrollForV,
+      getPositionInfoByPrimaryId,
+      delRow,
+      modifyRow,
+    }));
 
-  React.useEffect(() => {
-    propOpenRowKeys && setOpenRowKeys(propOpenRowKeys);
-  }, [propOpenRowKeys]);
+    const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
+    const [loadingKeys, setLoadingKeys] = React.useState([]);
 
-  // 打平树型 DS
-  const flatDataSource = React.useMemo(() => {
-    const ret: Array<any> = [];
-    const loop = (dataSource: Array<any>, level: number) => {
-      dataSource.forEach((item) => {
-        ret.push({ ...item, ___level: level });
+    React.useEffect(() => {
+      propOpenRowKeys && setOpenRowKeys(propOpenRowKeys);
+    }, [propOpenRowKeys]);
 
-        if (item.children) {
-          loop(item.children, level + 1);
-        }
-      });
-    };
+    // 打平树型 DS
+    const flatDataSource = React.useMemo(() => {
+      const ret: Array<any> = [];
+      const loop = (dataSource: Array<any>, level: number) => {
+        dataSource.forEach((item) => {
+          ret.push({ ...item, ___level: level });
 
-    loop(dataSource, 0);
-    return ret;
-  }, [dataSource, primaryKey]);
-
-  // 读取拍平后的 dataSoure 和 openRowKeys，把所有能显示的节点 计算出来
-  const showTreeNodes = React.useMemo(() => {
-    const ret: Array<any> = [];
-
-    openRowKeys.forEach((openKey) => {
-      flatDataSource.forEach((item) => {
-        if (item[primaryKey] === openKey) {
           if (item.children) {
-            item.children.forEach((child: any) => {
-              ret.push(child[primaryKey]);
-            });
-          }
-        }
-      });
-    });
-    return ret;
-  }, [flatDataSource, openRowKeys, primaryKey]);
-
-  const onTreeNodeClick = (params: TreeNodeHandleParams) => {
-    const { record, primaryKey, dataSource, openRowKeys, e } = params;
-    const id = record[primaryKey];
-    const index = openRowKeys.indexOf(id);
-
-    // 获取某个节点下面所有的子孙节点。结果会包含当前节点
-    const getChildrenKeyById = function (id: any) {
-      const ret = [id];
-      const loop = (data: Array<any>) => {
-        data.forEach((item) => {
-          ret.push(item[primaryKey]);
-          if (item.children) {
-            loop(item.children);
+            loop(item.children, level + 1);
           }
         });
       };
-      dataSource.forEach((item) => {
-        if (item[primaryKey] === id) {
-          if (item.children) {
-            loop(item.children);
-          }
-        }
-      });
+
+      loop(dataSource, 0);
       return ret;
-    };
+    }, [dataSource, primaryKey]);
 
-    if (index > -1) {
-      const ids = getChildrenKeyById(id);
+    // 读取拍平后的 dataSoure 和 openRowKeys，把所有能显示的节点 计算出来
+    const showTreeNodes = React.useMemo(() => {
+      const ret: Array<any> = [];
 
-      // 只要当前节点折叠，则当前节点下所有节点都进行闭合
-      ids.forEach((id) => {
-        const i = openRowKeys.indexOf(id);
-        if (i > -1) {
-          openRowKeys.splice(i, 1);
-        }
-      });
-    } else {
-      openRowKeys.push(id);
-    }
-
-    // 如果没有提供 props，则直接修改内部 state
-    if (!propOpenRowKeys) {
-      setOpenRowKeys([...openRowKeys]);
-    }
-
-    // 处理好的 openRowKeys，当前节点的 id，展开 true 折叠 false，record
-    onRowOpen?.(openRowKeys, id, index === -1, record);
-
-    // 如果有 loadData，且当前节点是折叠状态，则加载数据
-    if (
-      index === -1 &&
-      loadData &&
-      !loadingKeys.includes(id) &&
-      !record?.children?.length
-    ) {
-      setLoadingKeys([...loadingKeys, id]);
-
-      loadData(record)
-        .then(() => {
-          setLoadingKeys((loadingKeys) =>
-            loadingKeys.filter((key) => key !== id)
-          );
-        })
-        .catch((e) => {
-          setLoadingKeys((loadingKeys) =>
-            loadingKeys.filter((key) => key !== id)
-          );
-
-          // 闭合当前节点
-          if (!propOpenRowKeys) {
-            setOpenRowKeys((openRowKeys) => {
-              const newKeys = openRowKeys.filter((key) => key !== id);
-
-              onRowOpen?.(newKeys, id, index === -1, record);
-
-              return newKeys;
-            });
-          } else {
-            const newKeys = propOpenRowKeys.filter((key) => key !== id);
-
-            onRowOpen?.(newKeys, id, index === -1, record);
+      openRowKeys.forEach((openKey) => {
+        flatDataSource.forEach((item) => {
+          if (item[primaryKey] === openKey) {
+            if (item.children) {
+              item.children.forEach((child: any) => {
+                ret.push(child[primaryKey]);
+              });
+            }
           }
         });
-    }
-  };
+      });
+      return ret;
+    }, [flatDataSource, openRowKeys, primaryKey]);
 
-  const renderTable = () => {
-    let tableArr: Array<Array<any>> = [];
-    let tableIndex = -1;
-    const notRenderCellIndex: Array<Array<any>> = [];
+    // 显示的 dataSource
+    const showDs = React.useMemo(() => {
+      return flatDataSource?.filter((row) => {
+        return row.___level === 0 || showTreeNodes.includes(row[primaryKey]);
+      });
+    }, [showTreeNodes, flatDataSource]);
+    const domHeaderHeight =
+      (
+        refDomTable?.current?.querySelector(
+          ":scope > .PE-header"
+        ) as HTMLElement
+      )?.getBoundingClientRect()?.height || 0;
 
-    flatDataSource?.map((row, rowIndex, arr) => {
-      const isOpen = openRowKeys.includes(row[primaryKey]);
-      const isLoading = loadingKeys.includes(row[primaryKey]);
-      const isShow =
-        row.___level === 0 || showTreeNodes.includes(row[primaryKey]);
+    // ⬇⬇⬇ 虚拟滚动专用 ⬇⬇⬇
+    const [visibleData, setVisibleData] = React.useState<Array<any>>([]);
+    const positionforV = React.useRef<Array<PositionForV>>([]);
+    const refPEBody = React.useRef<HTMLDivElement>(null);
+    const visibleCount = React.useRef<number>(0);
+    const paddingTop = React.useRef<number>(0);
+    // 用来判断方向
+    const preScrollTop = React.useRef<number>(0);
+    const startIndex = React.useRef<number>(0);
+    const bufferCount = React.useRef<number>(1);
+    const stylePeBody: React.CSSProperties = {};
+    const resetEvent = React.useRef<any>(
+      debounce(() => {
+        refPEBody.current.classList.remove("PETable-no-event");
+      }, 90)
+    );
+    let endIndex = 0;
 
-      const renderTr = isShow ? (
-        <tr
-          key={rowIndex}
-          data-row-index={rowIndex}
-          className={classNames("PE-Body-row", {
-            "PE-Body-row-first": rowIndex == 0,
-            "PE-Body-row-last": rowIndex == arr.length - 1,
-            "PE-Body-Tree-group-view-row-parent":
-              row.___level === 0 && isTreeGroupView,
-            "PE-Body-Tree-group-view-row-parent-round":
-              row.___level === 0 && isTreeGroupView && round,
-          })}
-          data-primary-id={row[primaryKey]}
-          style={{ height: rowHeight }}
-        >
-          {flatColumn?.map((col, colIndex, arr) => {
-            const lockStyle: React.CSSProperties = {};
-            // 合并单元格处理
-            const matchCellIndex = notRenderCellIndex
-              .map((cellIndex) => cellIndex.toString())
-              .indexOf([rowIndex, colIndex].toString());
+    const resizeForV = (refPETable: HTMLElement, forceRender = false) => {
+      if (!refPETable) return;
+      if (useVirtual) {
+        const height =
+          refPETable.getBoundingClientRect().height - domHeaderHeight;
 
-            if (matchCellIndex > -1) {
-              // 此处删不删数组中的项，其实无所谓
-              notRenderCellIndex.splice(matchCellIndex, 1);
-              return null;
+        visibleCount.current = Math.ceil(height / rowHeight);
+        endIndex = startIndex.current + visibleCount.current;
+
+        updateVisibleDataAndLayout(forceRender);
+      }
+    };
+    const scrollForV = (refPETable: HTMLElement) => {
+      if (!refPETable) return;
+
+      refPEBody.current.classList.add("PETable-no-event");
+      const binarySearch = (list: Array<any>, value: any) => {
+        let start = 0;
+        let end = list.length - 1;
+        let tempIndex = null;
+
+        while (start <= end) {
+          let midIndex = ~~((start + end) / 2);
+          let midValue = list[midIndex].bottom;
+
+          // 刚好等于 current.buttom 时，则是 curent.index 的下一个，即 == (current.index + 1).top
+          if (midValue === value) {
+            return midIndex + 1;
+          }
+          // 不符合，继续找
+          else if (midValue < value) {
+            start = midIndex + 1;
+          }
+          // 打到了，但可能不是第一个
+          else if (midValue > value) {
+            // 所以要 继续往前找 找到第一个
+            if (tempIndex === null || tempIndex > midIndex) {
+              tempIndex = midIndex;
             }
+            end = end - 1;
+          }
+        }
 
-            const attrs =
-              cellProps?.(rowIndex, colIndex, col?.dataIndex, row) || {};
+        resetEvent.current();
 
-            // warning: tree 下不建议合并行
-            // 下面这种合并方法虽然会多一个当前的进去，但再下次渲染的时候，会清空掉，也还好
-            if (attrs.colSpan > 1 || attrs.rowSpan > 1) {
-              for (let i = 0; i < (attrs.colSpan ?? 1); i++) {
-                for (let j = 0; j < (attrs.rowSpan ?? 1); j++) {
-                  notRenderCellIndex.push([rowIndex + j, colIndex + i]);
+        return tempIndex;
+      };
+
+      // 通过 scrollTop，找到当前可视区域的第一条数据的位置信息
+      // 条件是 scrollTop < current.bottom && scrollTop >= current.top
+
+      startIndex.current = binarySearch(
+        positionforV.current,
+        refPETable.scrollTop
+      );
+
+      endIndex = startIndex.current + visibleCount.current;
+      updateVisibleDataAndLayout();
+    };
+    const getPositionInfoByPrimaryId = (primaryId: string) => {
+      return positionforV.current?.find?.(
+        (item) => item.primaryId === primaryId
+      );
+    };
+    const updateVisibleDataAndLayout = (forceRender = false) => {
+      // buffer 区域
+      const bufferTop = showDs.slice(
+        startIndex.current - bufferCount.current,
+        startIndex.current
+      );
+      const bufferBottom = showDs.slice(
+        endIndex,
+        endIndex + bufferCount.current
+      );
+
+      // 合并 buffer 及可视区域的数据
+      const visibleData = [
+        ...bufferTop,
+        ...showDs.slice(startIndex.current, endIndex),
+        ...bufferBottom,
+      ];
+
+      const _paddingTop = bufferTop.length
+        ? positionforV.current[startIndex.current].top -
+          positionforV.current[startIndex.current - 1].height
+        : 0;
+
+      // 优化。防止每次滚动都渲染
+      if (
+        paddingTop.current != _paddingTop ||
+        _paddingTop == 0 ||
+        forceRender
+      ) {
+        paddingTop.current = _paddingTop;
+        setVisibleData(visibleData);
+      }
+    };
+    const delRow = (primaryId: string) => {
+      // 删除数组项目
+      const index = positionforV.current.findIndex(
+        (item) => item.primaryId === primaryId
+      );
+
+      if (index > -1) {
+        // 更新后面的数据的位置信息
+        for (let i = index + 1; i < positionforV.current.length; i++) {
+          if (i === index + 1) {
+            positionforV.current[i].top = positionforV.current[i - 1].top;
+          } else {
+            positionforV.current[i].top = positionforV.current[i - 1].bottom;
+          }
+
+          positionforV.current[i].bottom =
+            positionforV.current[i].top + positionforV.current[i].height;
+        }
+
+        positionforV.current.splice(index, 1);
+        resizeForV(refDomTable.current, true);
+      }
+    };
+    const modifyRow = (
+      primaryId: string,
+      callback?: (data: any) => any,
+      forceRender = true
+    ) => {
+      // 从 dataSource 里面查询出来
+      function findDataInDs(ds: Array<any>, primaryId: string): any {
+        for (let i = 0; i < ds.length; i++) {
+          if (ds[i][primaryKey] === primaryId) {
+            return ds[i];
+          } else if (Array.isArray(ds[i].children)) {
+            const data = findDataInDs(ds[i].children, primaryId);
+            if (data) return data;
+          }
+        }
+      }
+
+      const data = findDataInDs(dataSource, primaryId);
+
+      if (!data) {
+        return;
+      }
+      const newData = callback?.(data) || data;
+      {
+        const index = flatDataSource.findIndex(
+          (item) => item[primaryKey] === primaryId
+        );
+
+        if (index > -1) {
+          flatDataSource[index] = { ...flatDataSource[index], ...newData };
+        }
+      }
+
+      {
+        const index = showDs.findIndex(
+          (item) => item[primaryKey] === primaryId
+        );
+
+        if (index > -1) {
+          showDs[index] = { ...showDs[index], ...newData };
+        }
+      }
+
+      resizeForV(refDomTable.current, forceRender);
+    };
+    const openRow = (primaryId: string) => {};
+    const closeRow = (primaryId: string) => {};
+
+    // 初始化位置信息
+    React.useEffect(() => {
+      if (useVirtual) {
+        positionforV.current = showDs.map((row, index) => {
+          return {
+            rIndex: index,
+            top: index * rowHeight,
+            bottom: (index + 1) * rowHeight,
+            height: rowHeight,
+            primaryId: row[primaryKey],
+            isFirstTr: row.___level === 0,
+          };
+        });
+      }
+    }, [showDs, rowHeight, useVirtual]);
+
+    // 获取实际 Row DOM 的高度
+    React.useLayoutEffect(() => {
+      const groupTableEl =
+        refPEBody.current?.querySelectorAll?.(".PE-Body-table");
+
+      if (
+        useVirtual &&
+        refPEBody.current &&
+        groupTableEl?.length &&
+        positionforV.current.length
+      ) {
+        const domTable = refDomTable?.current;
+
+        if (!domTable) {
+          return;
+        }
+
+        const isDirUp = domTable.scrollTop < preScrollTop.current;
+        let isAdjusted = false;
+
+        preScrollTop.current = domTable.scrollTop;
+
+        Array.from(groupTableEl).forEach((gTableItem: HTMLElement) => {
+          Array.from(gTableItem.querySelector("tbody")?.children || []).forEach(
+            (item: HTMLElement, itemIndex) => {
+              const index = +item.getAttribute("data-row-index");
+              let height = item.offsetHeight;
+
+              if (itemIndex === 0) {
+                if (
+                  item.classList.contains("PE-Body-Tree-group-view-row-parent")
+                ) {
+                  gTableItem.classList.remove("PE-Body-Tree-clear-padding");
+                  height +=
+                    item.getBoundingClientRect().y -
+                    gTableItem.getBoundingClientRect().y;
+                } else {
+                  gTableItem.classList.add("PE-Body-Tree-clear-padding");
+                }
+              }
+
+              const oldHeight = positionforV.current[index].height;
+              const diffHeight = height - oldHeight;
+
+              if (diffHeight) {
+                positionforV.current[index].height = height;
+                positionforV.current[index].bottom += diffHeight;
+
+                // 解决快速向下滚动，导致没有渲染，再次向上滚动时的抖动问题
+                if (!isAdjusted && isDirUp) {
+                  isAdjusted = true;
+                  domTable.scrollTop += diffHeight;
+                }
+
+                // 更新后面的数据的位置信息
+                for (let i = index + 1; i < positionforV.current.length; i++) {
+                  positionforV.current[i].top += diffHeight;
+                  positionforV.current[i].bottom += diffHeight;
                 }
               }
             }
-
-            if (!autoWidth) {
-              if (
-                lockLeftColumns?.length &&
-                colIndex < lockLeftColumns.length
-              ) {
-                lockStyle.position = "sticky";
-                lockStyle.left = lockLeftColumns
-                  .slice(0, colIndex)
-                  .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
-              } else if (
-                lockRightColumns?.length &&
-                colIndex >= flatColumn.length - lockRightColumns.length
-              ) {
-                lockStyle.position = "sticky";
-                lockStyle.right = lockRightColumns
-                  .slice(
-                    colIndex - flatColumn.length + lockRightColumns.length + 1
-                  )
-                  .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
-              }
-            }
-
-            return (
-              <td
-                {...attrs}
-                key={colIndex}
-                data-row-index={rowIndex}
-                data-col-index={colIndex}
-                className={classNames("PE-Body-col", {
-                  "PE-Body-col-first": colIndex == 0,
-                  "PE-Body-col-last": colIndex == arr.length - 1,
-                  "PE-Body-col-lock-left":
-                    !autoWidth && colIndex < lockLeftColumns.length,
-                  "PE-Body-col-lock-right":
-                    !autoWidth &&
-                    colIndex >= flatColumn.length - lockRightColumns.length,
-                })}
-                style={{
-                  ...(attrs?.style || {}),
-                  textAlign: col?.align,
-                  ...lockStyle,
-                }}
-              >
-                <div
-                  className={classNames({
-                    "PE-Body-Tree-col": colIndex === 0,
-                  })}
-                >
-                  {colIndex === 0 ? (
-                    <div
-                      className="PE-Body-Tree-arrow"
-                      style={{ paddingLeft: row?.___level * indent }}
-                    >
-                      <div
-                        className={classNames("PE-Body-Tree-arrow-click", {
-                          "PE-Body-Tree-arrow-disabled":
-                            isLoading || row?.isLeaf === true,
-                        })}
-                        onClick={(e) => {
-                          onTreeNodeClick({
-                            record: row,
-                            primaryKey,
-                            dataSource: flatDataSource,
-                            openRowKeys: [...(openRowKeys || [])],
-                          });
-                        }}
-                      >
-                        {row?.isLeaf === false
-                          ? isLoading
-                            ? iconLoading
-                            : isOpen
-                            ? iconExpand
-                            : iconFold
-                          : null}
-                      </div>
-                    </div>
-                  ) : null}
-                  <div className="PE-Body-Tree-col-cell">
-                    {typeof col?.cell === "function"
-                      ? col?.cell(
-                          col?.dataIndex ? row[col?.dataIndex] : undefined,
-                          rowIndex,
-                          row
-                        )
-                      : col?.dataIndex
-                      ? row[col?.dataIndex]
-                      : undefined}
-                  </div>
-                </div>
-              </td>
-            );
-          })}
-        </tr>
-      ) : null;
-
-      if (!isTreeGroupView) {
-        if (!Array.isArray(tableArr[0])) {
-          tableArr[0] = [renderTr];
-        } else {
-          tableArr[0].push(renderTr);
-        }
-      } else if (row.___level === 0) {
-        tableArr[++tableIndex] = [renderTr];
-      } else {
-        tableArr[tableIndex].push(renderTr);
+          );
+        });
       }
     });
 
-    return (
-      <>
-        {tableArr.map((tbody, index) => (
-          <table
-            className={classNames("PE-Body-table", {
-              "PE-Body-auto-width": autoWidth,
-              "PE-Body-Tree-group-view-table": isTreeGroupView,
-              "PE-Body-Tree-group-view-table-round": isTreeGroupView && round,
-            })}
-            key={index}
-          >
-            <ColGroup columns={flatColumn} autoWidth={autoWidth} />
-            <tbody>{tbody}</tbody>
-          </table>
-        ))}
-        {!dataSource?.length && !loading ? (
-          <table
-            className={classNames("PE-Body-table", {
-              "PE-Body-auto-width": autoWidth,
-            })}
-          >
-            <ColGroup columns={flatColumn} autoWidth={autoWidth} />
-            <tbody>
-              <tr>
-                <td className="PE-Body-empty" colSpan={flatColumn.length}>
-                  {emptyContent ?? "没有数据"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        ) : null}
-      </>
-    );
-  };
+    if (useVirtual) {
+      stylePeBody["height"] =
+        positionforV.current[positionforV.current.length - 1]?.bottom ||
+        "unset";
+      stylePeBody["paddingTop"] = paddingTop.current;
+    }
+    // ⬆⬆⬆ 虚拟滚动专用 ⬆⬆⬆
 
-  return (
-    <div
-      className={classNames("PE-Body", "PE-Body-Tree", {
-        "PE-Body-round": round,
-      })}
-    >
-      {renderTable()}
-    </div>
-  );
-});
+    const onTreeNodeClick = (params: TreeNodeHandleParams) => {
+      const {
+        record,
+        primaryKey,
+        dataSource,
+        openRowKeys,
+        e,
+        originOpenRowKeys,
+      } = params;
+      const id = record[primaryKey];
+      const index = openRowKeys.indexOf(id);
+
+      // 获取某个节点下面所有的子孙节点。结果会包含当前节点
+      const getChildrenKeyById = function (id: any) {
+        const ret = [id];
+        const loop = (data: Array<any>) => {
+          data.forEach((item) => {
+            ret.push(item[primaryKey]);
+            if (item.children) {
+              loop(item.children);
+            }
+          });
+        };
+        dataSource.forEach((item) => {
+          if (item[primaryKey] === id) {
+            if (item.children) {
+              loop(item.children);
+            }
+          }
+        });
+        return ret;
+      };
+
+      if (index > -1) {
+        const ids = getChildrenKeyById(id);
+
+        // 只要当前节点折叠，则当前节点下所有节点都进行闭合
+        ids.forEach((id, idIndex) => {
+          const i = openRowKeys.indexOf(id);
+          if (i > -1) {
+            openRowKeys.splice(i, 1);
+          }
+
+          if (useVirtual) {
+            originOpenRowKeys.splice(i, 1);
+            if (idIndex === 0) {
+              return;
+            }
+            // 删除位置
+            {
+              const index = positionforV.current.findIndex(
+                (item) => item.primaryId === id
+              );
+              if (index > -1) {
+                // 更新后面的数据的位置信息
+                for (let i = index + 1; i < positionforV.current.length; i++) {
+                  if (i === index + 1) {
+                    positionforV.current[i].top =
+                      positionforV.current[i - 1].top;
+                  } else {
+                    positionforV.current[i].top =
+                      positionforV.current[i - 1].bottom;
+                  }
+
+                  positionforV.current[i].bottom =
+                    positionforV.current[i].top +
+                    positionforV.current[i].height;
+                }
+
+                positionforV.current.splice(index, 1);
+              }
+            }
+            // 删除 showDs
+            {
+              const index = showDs.findIndex((item) => item[primaryKey] === id);
+              if (index > -1) {
+                showDs.splice(index, 1);
+              }
+            }
+            // 删除 showTreeNodes
+            {
+              const index = showTreeNodes.findIndex((item) => item === id);
+              if (index > -1) {
+                showTreeNodes.splice(index, 1);
+              }
+            }
+          }
+        });
+      } else {
+        openRowKeys.push(id);
+
+        if (useVirtual) {
+          originOpenRowKeys.push(id);
+          flatDataSource.forEach((item) => {
+            if (item[primaryKey] === id) {
+              if (item.children?.length) {
+                // 找到 showDs 的位置，进行插入
+                {
+                  const index = showDs.findIndex(
+                    (item) => item[primaryKey] === id
+                  );
+                  if (index > -1) {
+                    showDs.splice(
+                      index + 1,
+                      0,
+                      ...item.children.map((_item: any) => ({
+                        ..._item,
+                        ___level: item.___level + 1,
+                      }))
+                    );
+                  }
+                }
+                // 找到 position 的位置，进行插入
+                {
+                  const index = positionforV.current.findIndex(
+                    (item) => item.primaryId === id
+                  );
+                  if (index > -1) {
+                    positionforV.current.splice(
+                      index + 1,
+                      0,
+                      ...item.children.map((item: any, i: number) => {
+                        return {
+                          rIndex: index + i + 1,
+                          top:
+                            positionforV.current[index].bottom + i * rowHeight,
+                          bottom:
+                            positionforV.current[index].bottom +
+                            (i + 1) * rowHeight,
+                          height: rowHeight,
+                          primaryId: item[primaryKey],
+                          isFirstTr: item.___level === 0,
+                        };
+                      })
+                    );
+
+                    // 更新后面的数据的位置信息
+                    for (
+                      let i = index + 1 + item.children.length;
+                      i < positionforV.current.length;
+                      i++
+                    ) {
+                      positionforV.current[i].top =
+                        positionforV.current[i - 1].bottom;
+
+                      positionforV.current[i].bottom =
+                        positionforV.current[i].top +
+                        positionforV.current[i].height;
+                    }
+                  }
+                }
+                // showTreeNodes
+                {
+                  showTreeNodes.push(
+                    ...item.children.map((item: any) => item[primaryKey])
+                  );
+                }
+              }
+            }
+          });
+        }
+      }
+      // 如果没有提供 props，则直接修改内部 state
+      if (!propOpenRowKeys && !useVirtual) {
+        setOpenRowKeys([...openRowKeys]);
+      } else if (useVirtual) {
+        resizeForV(refDomTable.current, true);
+      }
+
+      // 处理好的 openRowKeys，当前节点的 id，展开 true 折叠 false，record
+      onRowOpen?.(openRowKeys, id, index === -1, record);
+
+      // 如果有 loadData，且当前节点是折叠状态，则加载数据
+      if (
+        index === -1 &&
+        loadData &&
+        !loadingKeys.includes(id) &&
+        !record?.children?.length
+      ) {
+        setLoadingKeys([...loadingKeys, id]);
+
+        loadData(record)
+          .then(() => {
+            setLoadingKeys((loadingKeys) =>
+              loadingKeys.filter((key) => key !== id)
+            );
+          })
+          .catch((e) => {
+            setLoadingKeys((loadingKeys) =>
+              loadingKeys.filter((key) => key !== id)
+            );
+
+            // 闭合当前节点
+            if (!propOpenRowKeys && !useVirtual) {
+              setOpenRowKeys((openRowKeys) => {
+                const newKeys = openRowKeys.filter((key) => key !== id);
+
+                onRowOpen?.(newKeys, id, index === -1, record);
+
+                return newKeys;
+              });
+            } else {
+              const newKeys = propOpenRowKeys.filter((key) => key !== id);
+
+              onRowOpen?.(newKeys, id, index === -1, record);
+            }
+          });
+      }
+    };
+
+    const renderTable = () => {
+      let tableArr: Array<Array<any>> = [];
+      let tableIndex = -1;
+      const notRenderCellIndex: Array<Array<any>> = [];
+
+      (useVirtual ? visibleData : showDs)?.map((row, rowIndex, arr) => {
+        const isOpen = openRowKeys.includes(row[primaryKey]);
+        const isLoading = loadingKeys.includes(row[primaryKey]);
+        const rIndex = useVirtual
+          ? (startIndex.current - bufferCount.current < 0
+              ? 0
+              : startIndex.current - bufferCount.current) + rowIndex
+          : rowIndex;
+        const renderTr = (
+          <tr
+            key={rIndex}
+            data-row-index={rIndex}
+            className={classNames("PE-Body-row", {
+              "PE-Body-row-first": rowIndex == 0,
+              "PE-Body-row-last": rowIndex == arr.length - 1,
+              "PE-Body-Tree-group-view-row-parent":
+                row.___level === 0 && isTreeGroupView,
+              "PE-Body-Tree-group-view-row-parent-round":
+                row.___level === 0 && isTreeGroupView && round,
+            })}
+            data-primary-id={row[primaryKey]}
+            style={{ height: rowHeight }}
+          >
+            {flatColumn?.map((col, colIndex, arr) => {
+              const lockStyle: React.CSSProperties = {};
+              // 合并单元格处理
+              const matchCellIndex = notRenderCellIndex
+                .map((cellIndex) => cellIndex.toString())
+                .indexOf([rowIndex, colIndex].toString());
+
+              if (matchCellIndex > -1) {
+                // 此处删不删数组中的项，其实无所谓
+                notRenderCellIndex.splice(matchCellIndex, 1);
+                return null;
+              }
+
+              const attrs =
+                cellProps?.(rIndex, colIndex, col?.dataIndex, row) || {};
+
+              // warning: tree 下不建议合并行
+              // 下面这种合并方法虽然会多一个当前的进去，但再下次渲染的时候，会清空掉，也还好
+              if (attrs.colSpan > 1 || attrs.rowSpan > 1) {
+                for (let i = 0; i < (attrs.colSpan ?? 1); i++) {
+                  for (let j = 0; j < (attrs.rowSpan ?? 1); j++) {
+                    notRenderCellIndex.push([rowIndex + j, colIndex + i]);
+                  }
+                }
+              }
+
+              if (!autoWidth) {
+                if (
+                  lockLeftColumns?.length &&
+                  colIndex < lockLeftColumns.length
+                ) {
+                  lockStyle.position = "sticky";
+                  lockStyle.left = lockLeftColumns
+                    .slice(0, colIndex)
+                    .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
+                } else if (
+                  lockRightColumns?.length &&
+                  colIndex >= flatColumn.length - lockRightColumns.length
+                ) {
+                  lockStyle.position = "sticky";
+                  lockStyle.right = lockRightColumns
+                    .slice(
+                      colIndex - flatColumn.length + lockRightColumns.length + 1
+                    )
+                    .reduce((pre, cur) => pre + (cur?.width ?? 0), 0);
+                }
+              }
+
+              return (
+                <td
+                  {...attrs}
+                  key={colIndex}
+                  data-row-index={rowIndex}
+                  data-col-index={colIndex}
+                  className={classNames("PE-Body-col", {
+                    "PE-Body-col-first": colIndex == 0,
+                    "PE-Body-col-last": colIndex == arr.length - 1,
+                    "PE-Body-col-lock-left":
+                      !autoWidth && colIndex < lockLeftColumns.length,
+                    "PE-Body-col-lock-right":
+                      !autoWidth &&
+                      colIndex >= flatColumn.length - lockRightColumns.length,
+                  })}
+                  style={{
+                    ...(attrs?.style || {}),
+                    textAlign: col?.align,
+                    ...lockStyle,
+                  }}
+                >
+                  <div
+                    className={classNames({
+                      "PE-Body-Tree-col": colIndex === 0,
+                    })}
+                  >
+                    {colIndex === 0 ? (
+                      <div
+                        className="PE-Body-Tree-arrow"
+                        style={{ paddingLeft: row?.___level * indent }}
+                      >
+                        <div
+                          className={classNames("PE-Body-Tree-arrow-click", {
+                            "PE-Body-Tree-arrow-disabled":
+                              isLoading || row?.isLeaf === true,
+                          })}
+                          onClick={(e) => {
+                            onTreeNodeClick({
+                              record: row,
+                              primaryKey,
+                              dataSource: flatDataSource,
+                              openRowKeys: [...(openRowKeys || [])],
+                              originOpenRowKeys: openRowKeys,
+                            });
+                          }}
+                        >
+                          {row?.isLeaf === false
+                            ? isLoading
+                              ? iconLoading
+                              : isOpen
+                              ? iconExpand
+                              : iconFold
+                            : null}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="PE-Body-Tree-col-cell">
+                      <CellRender col={col} row={row} rowIndex={rIndex} />
+                    </div>
+                  </div>
+                </td>
+              );
+            })}
+          </tr>
+        );
+
+        if (!isTreeGroupView) {
+          if (!Array.isArray(tableArr[0])) {
+            tableArr[0] = [renderTr];
+          } else {
+            tableArr[0].push(renderTr);
+          }
+        } else if (row.___level === 0) {
+          tableArr[++tableIndex] = [renderTr];
+        } else {
+          if (tableIndex === -1) {
+            tableArr[++tableIndex] = [];
+          }
+          tableArr[tableIndex].push(renderTr);
+        }
+      });
+
+      return (
+        <>
+          {tableArr.map((tbody, index) => (
+            <table
+              className={classNames("PE-Body-table", {
+                "PE-Body-auto-width": autoWidth,
+                "PE-Body-Tree-group-view-table": isTreeGroupView,
+                "PE-Body-Tree-group-view-table-round": isTreeGroupView && round,
+              })}
+              key={index}
+            >
+              <ColGroup columns={flatColumn} autoWidth={autoWidth} />
+              <tbody>{tbody}</tbody>
+            </table>
+          ))}
+          {!dataSource?.length && !loading ? (
+            <table
+              className={classNames("PE-Body-table", {
+                "PE-Body-auto-width": autoWidth,
+              })}
+            >
+              <ColGroup columns={flatColumn} autoWidth={autoWidth} />
+              <tbody>
+                <tr>
+                  <td className="PE-Body-empty" colSpan={flatColumn.length}>
+                    {emptyContent ?? "没有数据"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ) : null}
+        </>
+      );
+    };
+
+    return (
+      <div
+        className={classNames("PE-Body", "PE-Body-Tree", {
+          "PE-Body-round": round,
+        })}
+        ref={refPEBody}
+        style={stylePeBody}
+      >
+        {renderTable()}
+      </div>
+    );
+  })
+);
