@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as classNames from "classnames";
-import { debounce } from "lodash";
+import { debounce, cloneDeep } from "lodash";
 import ColGroup from "./ColGroup";
 import { ColumnProps } from "./../interface";
 import CellRender from "./CellRender";
@@ -166,6 +166,7 @@ export default React.memo(
     const showTreeNodes = React.useMemo(() => {
       const ret: Array<any> = [];
 
+      // 此种遍历顺序下，必须保证 openKey 中一定要包含可以追溯到根的值，否则会出错
       openRowKeys.forEach((openKey) => {
         flatDataSource.forEach((item) => {
           if (item[primaryKey] === openKey) {
@@ -501,11 +502,14 @@ export default React.memo(
         });
         return ret;
       };
+      console.log("o", cloneDeep(originOpenRowKeys));
 
+      // 进行折叠处理
       if (index > -1) {
         const ids = getChildrenKeyById(id);
 
         // 只要当前节点折叠，则当前节点下所有节点都进行闭合
+        // 待优化：判断次数太多，理论上只判断一层就可以了。因为也只展开一层
         ids.forEach((id, idIndex) => {
           const i = openRowKeys.indexOf(id);
           if (i > -1) {
@@ -513,7 +517,8 @@ export default React.memo(
           }
 
           if (useVirtual) {
-            originOpenRowKeys.splice(i, 1);
+            i > -1 && originOpenRowKeys.splice(i, 1);
+            // 折叠的行不做删除
             if (idIndex === 0) {
               return;
             }
@@ -557,12 +562,15 @@ export default React.memo(
             }
           }
         });
-      } else {
+      }
+      // 进行展开处理
+      else {
         openRowKeys.push(id);
 
         if (useVirtual) {
           originOpenRowKeys.push(id);
           flatDataSource.forEach((item) => {
+            // 找到当前节点的子节点 进行插入
             if (item[primaryKey] === id) {
               if (item.children?.length) {
                 // 找到 showDs 的位置，进行插入
@@ -631,6 +639,7 @@ export default React.memo(
           });
         }
       }
+      console.log("new", originOpenRowKeys);
       // 如果没有提供 props，则直接修改内部 state
       if (!propOpenRowKeys && !useVirtual) {
         setOpenRowKeys([...openRowKeys]);
