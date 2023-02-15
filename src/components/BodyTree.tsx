@@ -136,6 +136,7 @@ export default React.memo(
       getPositionInfoByPrimaryId,
       delRow,
       modifyRow,
+      getOpenRowKeys: () => openRowKeys,
     }));
 
     const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
@@ -309,39 +310,78 @@ export default React.memo(
         setVisibleData(visibleData);
       }
     };
-    const delRow = (primaryId: string) => {
-      // 删除数组项目
-      const index = positionforV.current.findIndex(
-        (item) => item.primaryId === primaryId
-      );
+    const delRow = (primaryIds: Array<string>) => {
+      // 遍历执行删除
+      primaryIds.map((id) => {
+        // 删除位置
+        {
+          const index = positionforV.current.findIndex(
+            (item) => item.primaryId === id
+          );
+          if (index > -1) {
+            // 更新后面的数据的位置信息
+            for (let i = index + 1; i < positionforV.current.length; i++) {
+              if (i === index + 1) {
+                positionforV.current[i].top = positionforV.current[i - 1].top;
+              } else {
+                positionforV.current[i].top =
+                  positionforV.current[i - 1].bottom;
+              }
 
-      if (index > -1) {
-        // 更新后面的数据的位置信息
-        for (let i = index + 1; i < positionforV.current.length; i++) {
-          if (i === index + 1) {
-            positionforV.current[i].top = positionforV.current[i - 1].top;
-          } else {
-            positionforV.current[i].top = positionforV.current[i - 1].bottom;
+              positionforV.current[i].bottom =
+                positionforV.current[i].top + positionforV.current[i].height;
+            }
+
+            positionforV.current.splice(index, 1);
           }
-
-          positionforV.current[i].bottom =
-            positionforV.current[i].top + positionforV.current[i].height;
         }
 
-        positionforV.current.splice(index, 1);
-        resizeForV(refDomTable.current, true);
-      }
+        // 删除 flatDataSource 里面的数据
+        {
+          const index = flatDataSource.findIndex(
+            (item) => item[primaryKey] === id
+          );
+          if (index > -1) {
+            flatDataSource.splice(index, 1);
+          }
+        }
+
+        // 删除 openRowKeys 里面的数据
+        {
+          const i = openRowKeys.indexOf(id);
+          if (i > -1) {
+            openRowKeys.splice(i, 1);
+          }
+        }
+
+        // 删除 showDs
+        {
+          const index = showDs.findIndex((item) => item[primaryKey] === id);
+          if (index > -1) {
+            showDs.splice(index, 1);
+          }
+        }
+        // 删除 showTreeNodes
+        {
+          const index = showTreeNodes.findIndex((item) => item === id);
+          if (index > -1) {
+            showTreeNodes.splice(index, 1);
+          }
+        }
+      });
+
+      resizeForV(refDomTable.current, true);
     };
     const modifyRow = (
       primaryId: string,
       callback?: (data: any) => any,
       forceRender = true
     ) => {
-      // 从 dataSource 里面查询出来
+      // 从 dataSource 里面查询出来，以及其在 dataSource 中的位置 parent
       function findDataInDs(ds: Array<any>, primaryId: string): any {
         for (let i = 0; i < ds.length; i++) {
           if (ds[i][primaryKey] === primaryId) {
-            return ds[i];
+            return [ds[i], ds, i];
           } else if (Array.isArray(ds[i].children)) {
             const data = findDataInDs(ds[i].children, primaryId);
             if (data) return data;
@@ -349,18 +389,28 @@ export default React.memo(
         }
       }
 
-      const data = findDataInDs(dataSource, primaryId);
+      const [data, parent, dataIndex] =
+        findDataInDs(dataSource, primaryId) || [];
 
       if (!data) {
         return;
       }
+
       const newData = callback?.(data) || data;
+
+      // 修改 dataSource 的对应位置的条目
+      {
+        parent[dataIndex] = { ...parent[dataIndex], ...newData };
+      }
+
+      // 此方法只对当前数据进行修改，不做children的处理
       {
         const index = flatDataSource.findIndex(
           (item) => item[primaryKey] === primaryId
         );
 
         if (index > -1) {
+          // 修改 flatDataSource 的对应位置的条目
           flatDataSource[index] = { ...flatDataSource[index], ...newData };
         }
       }
@@ -371,6 +421,7 @@ export default React.memo(
         );
 
         if (index > -1) {
+          // 修改 showDs 的对应位置的条目
           showDs[index] = { ...showDs[index], ...newData };
         }
       }
@@ -502,7 +553,6 @@ export default React.memo(
         });
         return ret;
       };
-      console.log("o", cloneDeep(originOpenRowKeys));
 
       // 进行折叠处理
       if (index > -1) {
@@ -639,7 +689,7 @@ export default React.memo(
           });
         }
       }
-      console.log("new", originOpenRowKeys);
+
       // 如果没有提供 props，则直接修改内部 state
       if (!propOpenRowKeys && !useVirtual) {
         setOpenRowKeys([...openRowKeys]);

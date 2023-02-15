@@ -37,6 +37,10 @@ export default React.memo(
       delRow,
       getDataSource: () => dataSource,
       modifyRow,
+      getOpenRowKeys: () =>
+        props.isTree
+          ? refBodyTree?.current?.getOpenRowKeys()
+          : props.openRowKeys,
     }));
 
     React.useEffect(() => {
@@ -246,17 +250,47 @@ export default React.memo(
     };
 
     const delRow = (primaryId: string) => {
-      // 删除数组项目
-      const index = dataSource.findIndex(
-        (item) => item[propPrimaryKey] === primaryId
-      );
+      if (props.isTree) {
+        const getChildrenKeyById = function (id: any) {
+          const ret = [id];
+          let index = -1;
 
-      if (index > -1) {
-        dataSource.splice(index, 1);
+          const loop = (data: Array<any>) => {
+            data.forEach((item) => {
+              ret.push(item[propPrimaryKey]);
 
-        props.isTree
-          ? refBodyTree.current?.delRow?.(primaryId)
-          : refBody.current?.delRow?.(primaryId);
+              if (item.children) {
+                loop(item.children);
+              }
+            });
+          };
+
+          dataSource.forEach((item, i) => {
+            if (item[propPrimaryKey] === id) {
+              if (item.children) {
+                loop(item.children);
+                index = i;
+              }
+            }
+          });
+
+          if (index > -1) {
+            dataSource.splice(index, 1);
+          }
+
+          return ret;
+        };
+        refBodyTree.current?.delRow?.(getChildrenKeyById(primaryId) || []);
+      } else {
+        // 删除数组项目
+        const index = dataSource.findIndex(
+          (item) => item[propPrimaryKey] === primaryId
+        );
+
+        if (index > -1) {
+          dataSource.splice(index, 1);
+          refBody.current?.delRow?.(primaryId);
+        }
       }
     };
 
