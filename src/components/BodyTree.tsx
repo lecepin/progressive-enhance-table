@@ -489,6 +489,11 @@ export default React.memo(
           (item) => item[primaryKey] === primaryId
         );
         if (index > -1) {
+          showDs[index] = {
+            ...showDs[index],
+            children: newChildren,
+          };
+
           showDs.splice(
             index + 1,
             0,
