@@ -41,6 +41,7 @@ export default React.memo(
         props.isTree
           ? refBodyTree?.current?.getOpenRowKeys()
           : props.openRowKeys,
+      appendRowChildren,
     }));
 
     React.useEffect(() => {
@@ -304,6 +305,18 @@ export default React.memo(
       }
 
       refBodyTree.current.modifyRow(primaryId, callback, forceRender);
+    };
+
+    const appendRowChildren = (
+      primaryId: string,
+      callback?: (data: any) => any,
+      forceRender = true
+    ) => {
+      if (!refBodyTree.current) {
+        return;
+      }
+
+      refBodyTree.current.appendRowChildren(primaryId, callback, forceRender);
     };
 
     // 同步多个区域水平滚动

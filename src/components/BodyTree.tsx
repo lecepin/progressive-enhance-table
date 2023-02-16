@@ -137,6 +137,7 @@ export default React.memo(
       delRow,
       modifyRow,
       getOpenRowKeys: () => openRowKeys,
+      appendRowChildren,
     }));
 
     const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
@@ -428,8 +429,120 @@ export default React.memo(
 
       resizeForV(refDomTable.current, forceRender);
     };
-    const openRow = (primaryId: string) => {};
-    const closeRow = (primaryId: string) => {};
+    const appendRowChildren = (
+      primaryId: string,
+      callback?: (data: any) => any,
+      forceRender = true
+    ) => {
+      // 从 dataSource 里面查询出来，以及其在 dataSource 中的位置 parent
+      function findDataInDs(ds: Array<any>, primaryId: string): any {
+        for (let i = 0; i < ds.length; i++) {
+          if (ds[i][primaryKey] === primaryId) {
+            return [ds[i], ds, i];
+          } else if (Array.isArray(ds[i].children)) {
+            const data = findDataInDs(ds[i].children, primaryId);
+            if (data) return data;
+          }
+        }
+      }
+
+      const [data, parent, dataIndex] =
+        findDataInDs(dataSource, primaryId) || [];
+
+      if (!data) {
+        return;
+      }
+
+      const newChildren = callback?.(data) || data?.children || [];
+
+      // 修改 dataSource
+      {
+        parent[dataIndex] = { ...parent[dataIndex], children: newChildren };
+      }
+
+      // 修改 flatDataSource
+      {
+        const index = flatDataSource.findIndex(
+          (item) => item[primaryKey] === primaryId
+        );
+
+        if (index > -1) {
+          flatDataSource[index] = {
+            ...flatDataSource[index],
+            children: newChildren,
+          };
+
+          flatDataSource.splice(
+            index + 1,
+            0,
+            ...newChildren.map((_item: any) => ({
+              ..._item,
+              ___level: flatDataSource[index].___level + 1,
+            }))
+          );
+        }
+      }
+
+      // 修改 showDs
+      {
+        const index = showDs.findIndex(
+          (item) => item[primaryKey] === primaryId
+        );
+        if (index > -1) {
+          showDs.splice(
+            index + 1,
+            0,
+            ...newChildren.map((_item: any) => ({
+              ..._item,
+              ___level: showDs[index].___level + 1,
+            }))
+          );
+        }
+      }
+
+      // 修改 showTreeNodes
+      {
+        showTreeNodes.push(...newChildren.map((item: any) => item[primaryKey]));
+      }
+
+      // 修改 positionforV
+      {
+        const index = positionforV.current.findIndex(
+          (item) => item.primaryId === primaryId
+        );
+        if (index > -1) {
+          positionforV.current.splice(
+            index + 1,
+            0,
+            ...newChildren.map((item: any, i: number) => {
+              return {
+                rIndex: index + i + 1,
+                top: positionforV.current[index].bottom + i * rowHeight,
+                bottom:
+                  positionforV.current[index].bottom + (i + 1) * rowHeight,
+                height: rowHeight,
+                primaryId: item[primaryKey],
+                isFirstTr: item.___level === 0,
+              };
+            })
+          );
+
+          // 更新后面的数据的位置信息
+          for (
+            let i = index + 1 + newChildren.length;
+            i < positionforV.current.length;
+            i++
+          ) {
+            positionforV.current[i].top = positionforV.current[i - 1].bottom;
+
+            positionforV.current[i].bottom =
+              positionforV.current[i].top + positionforV.current[i].height;
+          }
+        }
+      }
+
+      resizeForV(refDomTable.current, forceRender);
+    };
 
     // 初始化位置信息
     React.useEffect(() => {
