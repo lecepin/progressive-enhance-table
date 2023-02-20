@@ -632,6 +632,10 @@ export default React.memo(
     });
 
     if (useVirtual) {
+      if (visibleData.length === 0 && showDs.length > 0) {
+        updateVisibleDataAndLayout();
+      }
+
       stylePeBody["height"] =
         positionforV.current[positionforV.current.length - 1]?.bottom ||
         "unset";

@@ -339,22 +339,20 @@ export default React.memo(
         0
       );
 
-      // 丢失 body el 问题
-      setTimeout(() => {
-        [
-          ...Array.from(
-            refTable.current?.querySelectorAll?.(":scope > .PE-Body > table") ||
-              []
-          ),
-          refTable.current?.querySelector?.(":scope > .PE-header > table"),
-        ].forEach((el: HTMLElement) => {
-          if (el) {
-            // 解决 td 溢出无法控制的问题
-            el.style.width = actualWidth + "px";
-          }
-        });
-      }, 15);
-    }, [refTable.current, propAutoWidth, flatColumn]);
+      // 依赖 datasource 的变化，时序上
+      [
+        ...Array.from(
+          refTable.current?.querySelectorAll?.(":scope > .PE-Body > table") ||
+            []
+        ),
+        refTable.current?.querySelector?.(":scope > .PE-header > table"),
+      ].forEach((el: HTMLElement) => {
+        if (el) {
+          // 解决 td 溢出无法控制的问题
+          el.style.width = actualWidth + "px";
+        }
+      });
+    }, [refTable.current, propAutoWidth, flatColumn, dataSource]);
 
     // 处理 容器 Resize 后的一些同步问题
     const resizeObserverContainer = React.useMemo(() => {
