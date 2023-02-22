@@ -23,6 +23,7 @@ export default React.memo(
       style: propStyle = {},
       primaryKey: propPrimaryKey = "id",
       rowHeight: propRowHeight = 40,
+      fullWidth: propFullWidth = false,
     } = props;
 
     const refTable = React.useRef<HTMLDivElement>(null);
@@ -430,6 +431,9 @@ export default React.memo(
             "PETable",
             {
               "PETable-round": propRound,
+              "PETable-full-width": propFullWidth && !props.isTreeGroupView,
+              "PETable-full-width-groupview":
+                propFullWidth && props.isTreeGroupView,
             },
             props.className
           )}
@@ -452,6 +456,7 @@ export default React.memo(
             onResizeChange={props.onResizeChange}
             isTreeGroupView={props.isTreeGroupView}
             rowHeight={propRowHeight}
+            headerCustomRender={props.headerCustomRender}
           />
           {props.isTree ? (
             <BodyTree

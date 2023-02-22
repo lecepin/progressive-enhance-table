@@ -23,6 +23,7 @@ interface Props {
   onResizeChange?: (dataIndex: string, value: number) => void;
   isTreeGroupView?: boolean;
   rowHeight?: number;
+  headerCustomRender?: React.ReactNode;
 }
 
 export default React.memo(function Header({
@@ -37,6 +38,7 @@ export default React.memo(function Header({
   onResizeChange,
   isTreeGroupView,
   rowHeight,
+  headerCustomRender,
 }: Props) {
   return (
     <div
@@ -45,6 +47,7 @@ export default React.memo(function Header({
         "PE-header-round-group-view": round && isTreeGroupView,
       })}
     >
+      {headerCustomRender}
       <table
         className={classNames("PE-header-table", {
           "PE-header-auto-width": autoWidth,

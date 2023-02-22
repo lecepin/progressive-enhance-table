@@ -52,4 +52,6 @@ export interface TableProps {
   mergedCellsStick?: boolean;
   // dataSource 变化时，重置滚动条位置为 0
   resetScrollbarPosition?: boolean;
+  fullWidth?: boolean;
+  headerCustomRender?: React.ReactNode;
 }
