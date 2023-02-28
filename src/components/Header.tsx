@@ -102,6 +102,14 @@ export default React.memo(function Header({
                       "PE-header-col-lock-right":
                         !autoWidth &&
                         index >= flatColumn.length - lockRightColumns.length,
+                      "PE-header-col-last-in-last-row":
+                        parentIndex +
+                          (col?.rowSpan == 0 ||
+                          col?.rowSpan == 1 ||
+                          !col?.rowSpan
+                            ? 1
+                            : col?.rowSpan) ==
+                        parentArr.length,
                     })}
                     style={{
                       textAlign: col?.alignHeader,

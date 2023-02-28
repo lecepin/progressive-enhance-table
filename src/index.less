@@ -75,6 +75,7 @@
     
     .PE-header{
       background-color: var(--bg-thead);
+      border-bottom: 1px solid var(--color-boder);
     }
     .PE-header-row-first{
       th{
@@ -82,9 +83,18 @@
 
       }
 
-      .PE-header-col-first{
-        border-left: 0;
-      }
+    
+    }
+    .PE-header-col-first{
+      border-left: 0;
+    }
+    .PE-header-row-last{
+      th{
+        border-bottom: 0;
+      }      
+    }
+    .PE-header-col-last-in-last-row{
+      border-bottom: 0;
     }
 
     .PE-Body-col-first{
