@@ -351,8 +351,12 @@ export default React.memo(
         refTable.current?.querySelector?.(":scope > .PE-header > table"),
       ].forEach((el: HTMLElement) => {
         if (el) {
-          // 解决 td 溢出无法控制的问题
-          el.style.width = actualWidth + "px";
+          if (el.tagName === "DIV") {
+            el.style.minWidth = actualWidth + "px";
+          } else {
+            // 解决 td 溢出无法控制的问题
+            el.style.width = actualWidth + "px";
+          }
         }
       });
     }, [refTable.current, propAutoWidth, flatColumn, dataSource]);
