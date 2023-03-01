@@ -342,6 +342,8 @@ export default React.memo(
 
       // 依赖 datasource 的变化，时序上
       [
+        refTable.current?.querySelector?.(":scope > .PE-header"),
+        refTable.current?.querySelector?.(":scope > .PE-Body"),
         ...Array.from(
           refTable.current?.querySelectorAll?.(":scope > .PE-Body > table") ||
             []
@@ -443,6 +445,7 @@ export default React.memo(
           }}
           ref={refTable}
         >
+          {props.ContainerCustomRender}
           <Header
             columns={props.columns}
             flatColumn={flatColumn}

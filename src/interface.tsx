@@ -54,4 +54,5 @@ export interface TableProps {
   resetScrollbarPosition?: boolean;
   fullWidth?: boolean;
   headerCustomRender?: React.ReactNode;
+  ContainerCustomRender?: React.ReactNode;
 }
