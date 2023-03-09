@@ -31,6 +31,7 @@ export default React.memo(
     const refBody = React.useRef<any>(null);
     const refBodyTree = React.useRef<any>(null);
     const [dataSource, setDataSource] = React.useState<Array<any>>([]);
+    const refActualWidth = React.useRef<number>(0);
 
     React.useImperativeHandle(ref, () => ({
       ref: refTable?.current,
@@ -335,10 +336,12 @@ export default React.memo(
         return;
       }
 
-      const actualWidth = flatColumn.reduce(
+      const _actualWidth = flatColumn.reduce(
         (pre, cur) => pre + (cur?.width ?? 0),
         0
       );
+
+      refActualWidth.current = _actualWidth;
 
       // 依赖 datasource 的变化，时序上
       [
@@ -352,10 +355,10 @@ export default React.memo(
       ].forEach((el: HTMLElement) => {
         if (el) {
           if (el.tagName === "DIV") {
-            el.style.minWidth = actualWidth + "px";
+            el.style.minWidth = refActualWidth.current + "px";
           } else {
             // 解决 td 溢出无法控制的问题
-            el.style.width = actualWidth + "px";
+            el.style.width = refActualWidth.current + "px";
           }
         }
       });
@@ -402,6 +405,27 @@ export default React.memo(
           props.isTree
             ? refBodyTree.current?.scrollForV?.(refTable.current)
             : refBody.current?.scrollForV?.(refTable.current);
+
+          // 虚拟场景，同步没出来的宽度
+          [
+            refTable.current?.querySelector?.(":scope > .PE-header"),
+            refTable.current?.querySelector?.(":scope > .PE-Body"),
+            ...Array.from(
+              refTable.current?.querySelectorAll?.(
+                ":scope > .PE-Body > table"
+              ) || []
+            ),
+            refTable.current?.querySelector?.(":scope > .PE-header > table"),
+          ].forEach((el: HTMLElement) => {
+            if (el) {
+              if (el.tagName === "DIV") {
+                el.style.minWidth = refActualWidth.current + "px";
+              } else {
+                // 解决 td 溢出无法控制的问题
+                el.style.width = refActualWidth.current + "px";
+              }
+            }
+          });
         }
       };
 
