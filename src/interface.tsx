@@ -55,4 +55,8 @@ export interface TableProps {
   fullWidth?: boolean;
   headerCustomRender?: React.ReactNode;
   ContainerCustomRender?: React.ReactNode;
+  canDragRow?: boolean;
+  dragRowSlot?: React.ReactNode;
+  onDragRowEnd?: (dragRowNode: any, dropRowNode: any, dropPos: string) => void;
+  onDragRowIsAvailable?: (dragRowNode: any, dropRowNode: any) => boolean;
 }

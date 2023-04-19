@@ -49,3 +49,9 @@ export const logger = new LpLogger({
   level: "warn",
   search: "pe-log",
 });
+
+export function getReactPropsFromDOM(dom: any, prop: string) {
+  const _name = Object.keys(dom).find((e) => e.indexOf("__reactProps$") > -1);
+
+  return dom?.[_name]?.[prop];
+}

@@ -91,7 +91,7 @@
     }
 
     &-arrow{
-      display: inline-block;
+      display: flex;
       margin-right: 5px;
       margin-left: 5px;
 
@@ -169,6 +169,15 @@
 
   &-cell-merged-stick-to-top{
     position: sticky;
+  }
+
+  &-drag-row{
+    position: relative;
+    &>svg{
+      position: absolute; 
+      right: 0;
+      cursor: grab;
+    }
   }
 }
 

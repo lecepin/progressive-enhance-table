@@ -24,6 +24,7 @@ export default React.memo(
       primaryKey: propPrimaryKey = "id",
       rowHeight: propRowHeight = 40,
       fullWidth: propFullWidth = false,
+      canDragRow: propCanDragRow = false,
     } = props;
 
     const refTable = React.useRef<HTMLDivElement>(null);
@@ -511,6 +512,10 @@ export default React.memo(
               rowHeight={propRowHeight}
               refDomTable={refTable}
               useVirtual={props.useVirtual}
+              canDragRow={propCanDragRow}
+              dragRowSlot={props.dragRowSlot}
+              onDragRowEnd={props.onDragRowEnd}
+              onDragRowIsAvailable={props.onDragRowIsAvailable}
             />
           ) : (
             <Body
@@ -529,12 +534,17 @@ export default React.memo(
               useVirtual={props.useVirtual}
               mergedCellsStick={props.mergedCellsStick}
               refDomTable={refTable}
+              canDragRow={propCanDragRow}
+              dragRowSlot={props.dragRowSlot}
+              onDragRowEnd={props.onDragRowEnd}
+              onDragRowIsAvailable={props.onDragRowIsAvailable}
             />
           )}
 
           {renderLockMask()}
 
           <div className="PETable-resize-bar" ref={refReszieBar}></div>
+          <div className="PETable-drag-row-line"></div>
         </div>
       </Loading>
     );

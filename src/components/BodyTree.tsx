@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as classNames from "classnames";
 import { debounce, cloneDeep } from "lodash";
+import { getReactPropsFromDOM } from "./../utils";
 import ColGroup from "./ColGroup";
 import { ColumnProps } from "./../interface";
 import CellRender from "./CellRender";
@@ -39,6 +40,10 @@ interface Props {
   isTreeGroupView?: boolean;
   refDomTable?: React.MutableRefObject<HTMLDivElement | null>;
   useVirtual?: boolean;
+  canDragRow?: boolean;
+  dragRowSlot?: React.ReactNode;
+  onDragRowEnd?: (dragRowNode: any, dropRowNode: any, dropPos: string) => void;
+  onDragRowIsAvailable?: (dragRowNode: any, dropRowNode: any) => boolean;
 }
 
 interface TreeNodeHandleParams {
@@ -105,6 +110,36 @@ const iconLoading = (
   </svg>
 );
 
+const iconDragRow = (
+  <svg
+    width="15px"
+    height="15px"
+    viewBox="0 0 15 15"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g transform="translate(-270.000000, -222.000000)" fill-rule="nonzero">
+        <g transform="translate(270.000000, 222.000000)">
+          <rect
+            fill="#000000"
+            opacity="0"
+            x="0"
+            y="0"
+            width="15"
+            height="15"
+          ></rect>
+          <path
+            d="M4.56521739,3.26596469 C4.56521739,3.55903412 4.72156807,3.82984144 4.97537364,3.97637616 C5.22917921,4.12291088 5.54188057,4.12291088 5.79568614,3.97637616 C6.04949172,3.82984144 6.20584239,3.55903412 6.20584239,3.26596469 C6.20584239,2.97289525 6.04949172,2.70208793 5.79568614,2.55555321 C5.54188057,2.40901849 5.22917921,2.40901849 4.97537364,2.55555321 C4.72156807,2.70208793 4.56521739,2.97289525 4.56521739,3.26596469 L4.56521739,3.26596469 Z M8.64130435,3.26596469 C8.64130435,3.55903412 8.79765502,3.82984144 9.05146059,3.97637616 C9.30526617,4.12291088 9.61796753,4.12291088 9.8717731,3.97637616 C10.1255787,3.82984144 10.2819293,3.55903412 10.2819293,3.26596469 C10.2819293,2.97289525 10.1255787,2.70208793 9.8717731,2.55555321 C9.61796753,2.40901849 9.30526617,2.40901849 9.05146059,2.55555321 C8.79765502,2.70208793 8.64130435,2.97289525 8.64130435,3.26596469 L8.64130435,3.26596469 Z M4.56521739,6.03940219 C4.56521739,6.33247162 4.72156807,6.60327894 4.97537364,6.74981366 C5.22917921,6.89634838 5.54188057,6.89634838 5.79568614,6.74981366 C6.04949172,6.60327894 6.20584239,6.33247162 6.20584239,6.03940219 C6.20584239,5.74633275 6.04949172,5.47552543 5.79568614,5.32899071 C5.54188057,5.18245599 5.22917921,5.18245599 4.97537364,5.32899071 C4.72156807,5.47552543 4.56521739,5.74633275 4.56521739,6.03940219 L4.56521739,6.03940219 Z M4.56521739,8.81283969 C4.56521739,9.10590912 4.72156807,9.37671644 4.97537364,9.52325116 C5.22917921,9.66978588 5.54188057,9.66978588 5.79568614,9.52325116 C6.04949172,9.37671644 6.20584239,9.10590912 6.20584239,8.81283969 C6.20584239,8.51977025 6.04949172,8.24896293 5.79568614,8.10242821 C5.54188057,7.95589349 5.22917921,7.95589349 4.97537364,8.10242821 C4.72156807,8.24896293 4.56521739,8.51977025 4.56521739,8.81283969 L4.56521739,8.81283969 Z M8.64130435,6.03940219 C8.64130435,6.33247162 8.79765502,6.60327894 9.05146059,6.74981366 C9.30526617,6.89634838 9.61796753,6.89634838 9.8717731,6.74981366 C10.1255787,6.60327894 10.2819293,6.33247162 10.2819293,6.03940219 C10.2819293,5.74633275 10.1255787,5.47552543 9.8717731,5.32899071 C9.61796753,5.18245599 9.30526617,5.18245599 9.05146059,5.32899071 C8.79765502,5.47552543 8.64130435,5.74633275 8.64130435,6.03940219 L8.64130435,6.03940219 Z M4.56521739,11.5862772 C4.56521739,11.8793466 4.72156807,12.1501539 4.97537364,12.2966887 C5.22917921,12.4432234 5.54188057,12.4432234 5.79568614,12.2966887 C6.04949172,12.1501539 6.20584239,11.8793466 6.20584239,11.5862772 C6.20584239,11.2932078 6.04949172,11.0224004 5.79568614,10.8758657 C5.54188057,10.729331 5.22917921,10.729331 4.97537364,10.8758657 C4.72156807,11.0224004 4.56521739,11.2932078 4.56521739,11.5862772 L4.56521739,11.5862772 Z M8.64130435,11.5862772 C8.64130435,11.8793466 8.79765502,12.1501539 9.05146059,12.2966887 C9.30526617,12.4432234 9.61796753,12.4432234 9.8717731,12.2966887 C10.1255787,12.1501539 10.2819293,11.8793466 10.2819293,11.5862772 C10.2819293,11.2932078 10.1255787,11.0224004 9.8717731,10.8758657 C9.61796753,10.729331 9.30526617,10.729331 9.05146059,10.8758657 C8.79765502,11.0224004 8.64130435,11.2932078 8.64130435,11.5862772 L8.64130435,11.5862772 Z M8.64130435,8.81283969 C8.64130435,9.10590912 8.79765502,9.37671644 9.05146059,9.52325116 C9.30526617,9.66978588 9.61796753,9.66978588 9.8717731,9.52325116 C10.1255787,9.37671644 10.2819293,9.10590912 10.2819293,8.81283969 C10.2819293,8.51977025 10.1255787,8.24896293 9.8717731,8.10242821 C9.61796753,7.95589349 9.30526617,7.95589349 9.05146059,8.10242821 C8.79765502,8.24896293 8.64130435,8.51977025 8.64130435,8.81283969 L8.64130435,8.81283969 Z"
+            fill-opacity="0.4"
+            fill="#1F3858"
+          ></path>
+        </g>
+      </g>
+    </g>
+  </svg>
+);
+
 export default React.memo(
   React.forwardRef(function BodyTree(
     {
@@ -127,6 +162,10 @@ export default React.memo(
       rowHeight,
       useVirtual,
       refDomTable,
+      canDragRow,
+      dragRowSlot,
+      onDragRowEnd,
+      onDragRowIsAvailable,
     }: Props,
     ref
   ) {
@@ -142,6 +181,10 @@ export default React.memo(
 
     const [openRowKeys, setOpenRowKeys] = React.useState(defaultOpenRowKeys);
     const [loadingKeys, setLoadingKeys] = React.useState([]);
+
+    const dragStartEl = React.useRef<HTMLElement>(null);
+    const dragNextEl = React.useRef<HTMLElement>(null);
+    const dragNextPos = React.useRef<string>(null);
 
     React.useEffect(() => {
       propOpenRowKeys && setOpenRowKeys(propOpenRowKeys);
@@ -877,6 +920,7 @@ export default React.memo(
           <tr
             key={rIndex}
             data-row-index={rIndex}
+            data-raw={row}
             className={classNames("PE-Body-row", {
               "PE-Body-row-first": rowIndex == 0,
               "PE-Body-row-last": rowIndex == arr.length - 1,
@@ -967,6 +1011,18 @@ export default React.memo(
                         className="PE-Body-Tree-arrow"
                         style={{ paddingLeft: row?.___level * indent }}
                       >
+                        {canDragRow && row?.isCanDrag !== false ? (
+                          <div
+                            className="PE-Body-drag-row"
+                            draggable={
+                              canDragRow && row?.isCanDrag !== false
+                                ? "true"
+                                : "false"
+                            }
+                          >
+                            {dragRowSlot ?? iconDragRow}
+                          </div>
+                        ) : null}
                         <div
                           className={classNames("PE-Body-Tree-arrow-click", {
                             "PE-Body-Tree-arrow-disabled":
@@ -1060,6 +1116,89 @@ export default React.memo(
         })}
         ref={refPEBody}
         style={stylePeBody}
+        onDragStart={(e) => {
+          const rowDOM: HTMLElement = (e.target as HTMLElement)?.closest?.(
+            ".PE-Body-row"
+          );
+
+          if (!rowDOM) {
+            return;
+          }
+
+          dragStartEl.current = rowDOM;
+          e.dataTransfer.setDragImage(rowDOM, 0, rowDOM.offsetHeight / 2);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          const rowDOM: HTMLElement = (e.target as HTMLElement)?.closest?.(
+            ".PE-Body-row"
+          );
+          const lineDOM: HTMLElement = document.querySelector(
+            ".PETable-drag-row-line"
+          );
+
+          if (!lineDOM) {
+            return;
+          }
+
+          if (!rowDOM) {
+            lineDOM.style.display = "none";
+            return;
+          }
+
+          if (
+            onDragRowIsAvailable &&
+            dragNextEl.current != rowDOM &&
+            dragStartEl.current != rowDOM
+          ) {
+            dragNextEl.current != rowDOM;
+            const isAvailable = onDragRowIsAvailable(
+              cloneDeep(getReactPropsFromDOM(dragStartEl.current, "data-raw")),
+              cloneDeep(getReactPropsFromDOM(rowDOM, "data-raw"))
+            );
+            if (!isAvailable) {
+              return;
+            }
+          }
+
+          dragNextEl.current = rowDOM;
+
+          const table = rowDOM.closest("table");
+          const { y: rowDOMY, height: rowDOMH } =
+            rowDOM.getBoundingClientRect();
+          const centerY = rowDOMY + rowDOMH / 2;
+
+          lineDOM.style.display = "block";
+          lineDOM.style.left = table.getBoundingClientRect().x + "px";
+          lineDOM.style.width = table.getBoundingClientRect().width + "px";
+
+          if (e.clientY > centerY || rowDOM === dragStartEl.current) {
+            lineDOM.style.top = rowDOMY + rowDOMH + "px";
+            dragNextPos.current = "bottom";
+          } else {
+            lineDOM.style.top = rowDOMY + "px";
+            dragNextPos.current = "top";
+          }
+
+          lineDOM.style.display = "block";
+        }}
+        onDragEnter={(e) => {}}
+        onDragEnd={(e) => {
+          const lineDOM: HTMLElement = document.querySelector(
+            ".PETable-drag-row-line"
+          );
+          if (!lineDOM) {
+            return;
+          }
+          lineDOM.style.display = "none";
+
+          dragStartEl.current != dragNextEl.current &&
+            onDragRowEnd?.(
+              cloneDeep(getReactPropsFromDOM(dragStartEl.current, "data-raw")),
+              cloneDeep(getReactPropsFromDOM(dragNextEl.current, "data-raw")),
+              dragNextPos.current
+            );
+        }}
       >
         {renderTable()}
       </div>

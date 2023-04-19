@@ -153,6 +153,28 @@
     display: none;
   }
 
+  &-drag-row-line{
+    position: fixed;
+    width: 200px;
+    height: 0;
+    border-top: 1px solid #0052f2;
+    z-index: 999;
+    margin-left: 1px;
+    display: none;
+
+    &::before {
+      --width: 10px;
+      content: "";
+      position: absolute;
+      top: -9px;
+      left: -7px;
+      border-top: var(--width) solid transparent;
+      border-right: var(--width) solid #0052f2;
+      transform: rotate(-45deg);
+      transform-origin: right;
+    }
+  }
+
   &-round{
     border-radius: var(--round-radius);
   }
