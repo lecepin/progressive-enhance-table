@@ -51,7 +51,10 @@ export const logger = new LpLogger({
 });
 
 export function getReactPropsFromDOM(dom: any, prop: string) {
-  const _name = Object.keys(dom).find((e) => e.indexOf("__reactProps$") > -1);
+  const _name = Object.keys(dom).find(
+    (e) =>
+      e.indexOf("__reactProps$") > -1 || e.indexOf("__reactEventHandlers$") > -1
+  );
 
   return dom?.[_name]?.[prop];
 }
