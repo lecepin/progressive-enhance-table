@@ -109,6 +109,7 @@ export default React.memo(
       scrollForV,
       getPositionInfoByPrimaryId,
       delRow,
+      setForceFreshFlag,
     }));
 
     const notRenderCellIndex: Array<Array<any>> = [];
@@ -122,6 +123,9 @@ export default React.memo(
     const dragStartEl = React.useRef<HTMLElement>(null);
     const dragNextEl = React.useRef<HTMLElement>(null);
     const dragNextPos = React.useRef<string>(null);
+
+    // 在虚拟模式下，如果数据源变化，scroll 下显示旧内容，此flag刷新
+    const forceFreshFlag = React.useRef<boolean>(false);
 
     // ⬇⬇⬇ 虚拟滚动专用 ⬇⬇⬇
     const [visibleData, setVisibleData] = React.useState<Array<any>>([]);
@@ -177,6 +181,10 @@ export default React.memo(
     }, [dataSource, flatColumn, useVirtual]);
 
     let endIndex = 0;
+
+    const setForceFreshFlag = (value: boolean) => {
+      forceFreshFlag.current = value;
+    };
     const resizeForV = (refPETable: HTMLElement, forceRender = false) => {
       if (!refPETable) return;
       if (useVirtual) {
@@ -268,7 +276,8 @@ export default React.memo(
       if (
         paddingTop.current != _paddingTop ||
         _paddingTop == 0 ||
-        forceRender
+        forceRender ||
+        forceFreshFlag.current
       ) {
         paddingTop.current = _paddingTop;
         setVisibleData(visibleData);

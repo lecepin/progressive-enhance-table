@@ -45,6 +45,11 @@ export default React.memo(
           ? refBodyTree?.current?.getOpenRowKeys()
           : props.openRowKeys,
       appendRowChildren,
+      setForceFreshFlag: (value: boolean) => {
+        props.isTree
+          ? refBodyTree?.current?.setForceFreshFlag(value)
+          : refBody?.current?.setForceFreshFlag(value);
+      },
     }));
 
     React.useEffect(() => {
