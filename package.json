@@ -1,6 +1,6 @@
 {
   "name": "pe-table",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "intro component",
   "files": [
     "demo/",
@@ -63,5 +63,5 @@
     "access": "public"
   },
   "license": "MIT",
-  "homepage": "https://unpkg.com/pe-table@0.1.13/build/index.html"
+  "homepage": "https://unpkg.com/pe-table@0.1.14/build/index.html"
 }

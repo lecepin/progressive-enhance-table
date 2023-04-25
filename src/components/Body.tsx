@@ -329,6 +329,12 @@ export default React.memo(
         Array.from(refTbody.current.children).forEach((item: HTMLElement) => {
           const index = +item.getAttribute("data-row-index");
           const height = item.offsetHeight;
+
+          // 由于 ds 的变化导致数量可能抖动 无法对齐
+          if (positionforV.current.length < index) {
+            return;
+          }
+
           const oldHeight = positionforV.current[index].height;
           const diffHeight = height - oldHeight;
 
@@ -443,7 +449,7 @@ export default React.memo(
           if (!canDragRow) {
             return;
           }
-          
+
           const lineDOM: HTMLElement = document.querySelector(
             ".PETable-drag-row-line"
           );

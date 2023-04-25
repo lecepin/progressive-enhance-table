@@ -636,6 +636,11 @@ export default React.memo(
               const index = +item.getAttribute("data-row-index");
               let height = item.offsetHeight;
 
+              // 由于 ds 的变化导致数量可能抖动 无法对齐
+              if (positionforV.current.length < index) {
+                return;
+              }
+
               if (itemIndex === 0) {
                 if (
                   item.classList.contains("PE-Body-Tree-group-view-row-parent")
