@@ -367,6 +367,9 @@ export default React.memo(
         style={stylePeBody}
         ref={refPEBody}
         onDragStart={(e) => {
+          if (!canDragRow) {
+            return;
+          }
           const rowDOM: HTMLElement = (e.target as HTMLElement)?.closest?.(
             ".PE-Body-row"
           );
@@ -379,6 +382,9 @@ export default React.memo(
           e.dataTransfer.setDragImage(rowDOM, 0, rowDOM.offsetHeight / 2);
         }}
         onDragOver={(e) => {
+          if (!canDragRow) {
+            return;
+          }
           e.preventDefault();
           const rowDOM: HTMLElement = (e.target as HTMLElement)?.closest?.(
             ".PE-Body-row"
@@ -434,6 +440,10 @@ export default React.memo(
         }}
         onDragEnter={(e) => {}}
         onDragEnd={(e) => {
+          if (!canDragRow) {
+            return;
+          }
+          
           const lineDOM: HTMLElement = document.querySelector(
             ".PETable-drag-row-line"
           );
