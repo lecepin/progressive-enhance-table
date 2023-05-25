@@ -662,7 +662,7 @@ export default React.memo(
                 }
               }
 
-              const oldHeight = positionforV.current[index].height;
+              const oldHeight = positionforV.current?.[index]?.height || 0;
               const diffHeight = height - oldHeight;
 
               if (diffHeight) {
